@@ -16,8 +16,11 @@
 !/scripts/
 !/scripts/**
 
+# ===== All Launcher Batch =====
+!/start_gate.bat
+!/start_chat.bat
+!/edit_env.bat
+
 # ===== All Markdown =====
 !/CHANGELOG.md
 !/README.md
-!/start_gate.bat
-!/start_chat.bat
