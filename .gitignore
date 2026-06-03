@@ -19,3 +19,5 @@
 # ===== All Markdown =====
 !/CHANGELOG.md
 !/README.md
+!/start_gate.bat
+!/start_chat.bat
