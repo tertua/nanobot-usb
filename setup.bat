@@ -25,8 +25,12 @@ echo ================================================================
 echo.
 
 rem ── Check minimum Windows version ─────────────────────────
-for /f "tokens=3" %%v in ('ver') do set "WIN_VER=%%v"
-set "WIN_VER=%WIN_VER:~0,2%"
+for /f "tokens=2 delims=[]" %%v in ('ver') do (
+    for /f "tokens=2" %%a in ("%%v") do (
+        for /f "tokens=1 delims=." %%b in ("%%a") do set "WIN_VER=%%b"
+    )
+)
+if not defined WIN_VER set "WIN_VER=0"
 if %WIN_VER% LSS 10 (
     echo [ERROR] Windows 10 atau lebih baru diperlukan.
     echo         Versi Windows Anda: %WIN_VER%
