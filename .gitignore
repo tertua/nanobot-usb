@@ -16,6 +16,11 @@
 !/scripts/
 !/scripts/**
 
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
 # ===== All Launcher Batch =====
 !/start_gate.bat
 !/start_chat.bat
