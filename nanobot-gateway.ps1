@@ -131,23 +131,23 @@ if (Test-Path $EnvFileEnc) {
 
     if (Test-Path $EnvTmpFile) {
         Get-Content -Path $EnvTmpFile | ForEach-Object {
-            if ($_ -match '^\s*#') { return }
-            if ($_ -match '^([^=]+)=(.*)$') {
-                $name = $matches[1].Trim()
-                $val  = $matches[2].Trim()
-                [Environment]::SetEnvironmentVariable($name, $val, 'Process')
-            }
+			$idx = $_.IndexOf('=')
+			if ($idx -gt 0) {
+				$name = $_.Substring(0, $idx).Trim()
+				$val  = $_.Substring($idx + 1).Trim()
+				[Environment]::SetEnvironmentVariable($name, $val, 'Process')
+			}
         }
         Remove-Item -Path $EnvTmpFile -Force
     }
 } elseif (Test-Path $EnvPlain) {
     Get-Content -Path $EnvPlain | ForEach-Object {
-        if ($_ -match '^\s*#') { return }
-        if ($_ -match '^([^=]+)=(.*)$') {
-            $name = $matches[1].Trim()
-            $val  = $matches[2].Trim()
-            [Environment]::SetEnvironmentVariable($name, $val, 'Process')
-        }
+		$idx = $_.IndexOf('=')
+		if ($idx -gt 0) {
+			$name = $_.Substring(0, $idx).Trim()
+			$val  = $_.Substring($idx + 1).Trim()
+			[Environment]::SetEnvironmentVariable($name, $val, 'Process')
+		}
     }
 }
 
@@ -158,6 +158,7 @@ $env:HOME = $HOME_DIR
 # ── Inject portable PATH ────────────────────────────────────────────
 $PortablePaths = @(
     Join-Path $ROOT "bin"
+    Join-Path $ROOT "bin\pwsh7"    
     Join-Path $ROOT "bin\nodejs"
     Join-Path $ROOT "bin\git\cmd"
     Join-Path $ROOT "bin\git\mingw64\bin"
@@ -199,8 +200,8 @@ Write-Host "`n"
 # ── Run Gateway ──────────────────────────────────────────────────────
 try {
     & $PY -m nanobot gateway `
-        --config $CONFIG `
-        --port $HTTP_PORT
+        "--config=$CONFIG" `
+        "--port=$HTTP_PORT"
     $exitCode = $LASTEXITCODE
 } catch {
     Write-Host "`n  [ERROR] Gateway crashed: $_" -ForegroundColor Red
