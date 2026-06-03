@@ -194,6 +194,9 @@ if ($pipExists) {
 }
 Write-OK ""
 
+TIMEOUT /T 6 /NOBREAK
+cls
+
 # ===== STEP 4.5: GIT =====
 Write-Step "===== STEP 4.5: CHECK GIT ====="
 $GitReady = $false
@@ -313,7 +316,8 @@ if ($NodeReady) {
     & $NodeExe --version
 }
 Write-OK ""
-
+TIMEOUT /T 11 /NOBREAK
+cls
 # ===== STEP 4.9: POWERSHELL 7 PORTABLE =====
 Write-Step "===== STEP 4.9: POWERSHELL 7 PORTABLE ====="
 $PS7Dir = Join-Path $ROOT "bin\pwsh7"
@@ -351,7 +355,7 @@ if ($PS7Ready) {
     $env:PATH = "$PS7Dir;$env:PATH"
 }
 Write-OK ""
-
+cls
 # ===== STEP 5: SOURCE CODE =====
 Write-Step "===== STEP 5: PREPARE NANOBOT SOURCE CODE ====="
 $SrcOk = $false
@@ -408,7 +412,7 @@ if (-not $SrcOk) {
     }
 }
 Write-OK ""
-
+cls
 # ===== PORTABLE PATHS PATCH =====
 $patchScript = Join-Path $SCRIPTS_DIR "portable_paths.py"
 if (Test-Path $patchScript) {
@@ -421,6 +425,8 @@ if (Test-Path $patchScript) {
     }
 }
 Write-OK ""
+TIMEOUT /T 6 /NOBREAK
+cls
 # ===== STEP 6: DEPENDENCIES =====
 Write-Step "===== STEP 6: INSTALL DEPENDENCIES ====="
 Write-Step "         [API ONLY MODE]"
@@ -435,7 +441,7 @@ Write-OK ""
 
 $ReqFile = Join-Path $SCRIPTS_DIR "requirements-api-only.txt"
 if (Test-Path $ReqFile) {
-    Write-Info "Installing scripts\requirements-api-only.txt ..."
+    Write-Info "Build scripts\requirements-api-only.txt ..."
     & $PythonExe -m pip install --no-warn-script-location -r $ReqFile
 } else {
     Write-Warn "requirements-api-only.txt not found."
@@ -460,7 +466,8 @@ Write-Header "  Installed packages:"
 & $PythonExe -m pip list 2>$null
 Write-Header "  ----------------------------------------"
 Write-OK ""
-
+TIMEOUT /T 11 /NOBREAK
+cls
 # ===== STEP 7: CONFIGURATION =====
 Write-Step "===== STEP 7: GENERATE CONFIGURATION ====="
 $env:NANOBOT_HOME = $DATA_DIR
@@ -542,7 +549,7 @@ Write-OK ""
 # ===== FINAL CLEANUP =====
 if (Test-Path $APP_DIR) { Remove-Item -Path $APP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
 if (Test-Path $TMP_DIR) { Remove-Item -Path $TMP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
-
+cls
 # ===== SETUP COMPLETE =====
 Write-Header ""
 Write-Header "  ==================================================="
