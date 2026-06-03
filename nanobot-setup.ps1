@@ -271,8 +271,8 @@ if (-not $NodeReady) {
     Write-Info "Node.js not found, downloading portable..."
     $NodeVer = "24.16.0"
     Write-Info "Download Node.js v$NodeVer ($ArchNode)..."
-    $NodeZipUrl = "https://nodejs.org/dist/v$NodeVer/node-v$NodeVer-win-$NodeArch.zip"
-    $NodeZip = Join-Path $TMP_DIR "node-v$NodeVer-win-$NodeArch.zip"
+    $NodeZipUrl = "https://nodejs.org/dist/v$NodeVer/node-v$NodeVer-win-$ArchNode.zip"
+    $NodeZip = Join-Path $TMP_DIR "node-v$NodeVer-win-$ArchNode.zip"
     Download-Helper -Url $NodeZipUrl -Out $NodeZip
     if (-not (Test-Path $NodeZip)) {
         Write-Error "Failed to download Node.js!"
