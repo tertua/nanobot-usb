@@ -11,14 +11,19 @@ Just extract, setup, and go!
 ## 📋 Requirements
 
 - **Windows 10/11** (64-bit)
+- **PowerShell 7+** (recommended for .ps1 scripts)
 - **Internet connection** (for setup and API calls)
 - **~500MB** disk space
 
 ## 🚀 Quick Start
 
 ### Step 1: Setup
-```
-Double-click: setup.bat
+```powershell
+# PowerShell 7 (recommended):
+.\nanobot-setup.ps1
+
+# Or legacy batch:
+setup.bat
 ```
 The script will automatically:
 - Download Python 3.14 Embedded → `bin/`
@@ -34,8 +39,9 @@ The script will automatically:
 ### Step 2: Configure API Key
 
 **Option A — Safe editor (automatic encryption):**
-```
-Double-click: edit_env.bat
+```powershell
+.\scripts\edit_env.ps1    # PowerShell version
+edit_env.bat              # Batch version (if available)
 ```
 Opens Notepad with `data\.env` contents. Add your API key, save, close Notepad —
 the file is automatically encrypted to `data\.env.encrypted` (AES-256-GCM).
@@ -47,9 +53,9 @@ Edit file: data\.env
 Replace `sk-your-api-key-here` with your OpenAI Compatible API key.
 
 ### Step 3: Run
-```
-Double-click: start_gate.bat    → Gateway (WebSocket + WebUI)
-Double-click: start_chat.bat    → CLI Chat Mode
+```powershell
+.\nanobot-gateway.ps1    → Gateway (WebSocket + WebUI)
+.\nanobot-agent.ps1      → CLI Chat Mode
 ```
 
 Gateway will display the browser address (default: http://127.0.0.1:8765, see config.json → channels.websocket.port)
@@ -58,35 +64,37 @@ Gateway will display the browser address (default: http://127.0.0.1:8765, see co
 
 ```
 nanobot-usb/
-├── setup.bat                       ← Initial setup (run once)
-├── start_gate.bat                  ← Start Gateway and WebSocket
-├── start_chat.bat                  ← Start Chat CLI mode
-├── edit_env.bat                    ← Edit .env with auto-encryption
-├── update.bat                      ← Update to latest version
+├── nanobot-setup.ps1               ← Initial setup (PowerShell 7)
+├── nanobot-gateway.ps1             ← Start Gateway and WebSocket
+├── nanobot-agent.ps1               ← Start Chat CLI mode
+├── setup.bat                       ← Legacy batch setup
 ├── bin/
 │   ├── python.exe                  ← Python Embedded runtime
 │   ├── Lib/site-packages/          ← Installed Nanobot runtime
 │   ├── git/                        ← Portable MinGit
 │   └── nodejs/                     ← Portable Node.js
 ├── data/
-│   ├── home/                       ← Portable HOME for Git
-│   ├── knowledge/                  ← Knowledge base
-│   ├── logs/                       ← Log files
+│   ├── home/                       ← Portable HOME for Git (contains .ssh/)
+│   ├── workspace/                  ← Agent workspace and skills
+│   ├── config.json                 ← Main configuration
 │   ├── .env                        ← Plaintext (temporary, auto-cleaned)
 │   ├── .env.encrypted              ← AES-256-GCM encrypted
 │   └── .env_key                    ← Optional passphrase cache
 ├── tmp/                            ← Portable temporary files and npm cache
 ├── scripts/
-│   ├── env_crypt.py                ← AES-256-GCM + scrypt encrypt/decrypt
+│   ├── bootstrap.py                ← Bootstrap helper
 │   ├── download.ps1                ← Download utilities
 │   ├── extract.ps1                 ← Extract archives
-│   ├── unzip.vbs                   ← VBS fallback for extraction
-│   ├── post_config.py              ← Initial config generation
+│   ├── env_crypt.py                ← AES-256-GCM + scrypt encrypt/decrypt
+│   ├── edit_env.ps1                ← Safe .env editor with encryption
+│   ├── healthcheck.py              ← System readiness check
+│   ├── launcher.py                 ← Launcher utilities
 │   ├── portable_paths.py           ← Apply portable paths patch
+│   ├── post_config.py              ← Initial config generation
 │   ├── resolve_workspace.py        ← Workspace resolver
 │   ├── write_lockhead.py           ← System metadata writer
-│   └── requirements-api-only.txt
-└── app/                            ← Temporary source staging (auto-cleaned after setup)
+│   ├── unzip.vbs                   ← VBS fallback for extraction
+│   └── requirements-api-only.txt   ← Minimal API dependencies
 ```
 
 ## 🔐 .env Encryption
@@ -115,7 +123,7 @@ start_gate.bat / start_chat.bat
 | File | Function |
 |------|----------|
 | `scripts/env_crypt.py` | Encrypt/decrypt AES-256-GCM + scrypt |
-| `edit_env.bat` | Safe editor: open → edit → auto-encrypt |
+| `scripts/edit_env.ps1` | Safe editor: open → edit → auto-encrypt |
 | `data/.env.encrypted` | Encrypted file (salt + nonce + ciphertext + tag) |
 | `data/.env_key` | Optional: passphrase cache for non-interactive mode |
 | `data/.env` | Plaintext file (only exists during edit, immediately deleted) |
@@ -155,11 +163,12 @@ AZURE_API_VERSION=2023-12-01-preview
 
 ## 🔄 Update to Latest Version
 
-```
-Double-click: update.bat
+```powershell
+# Re-run setup to update:
+.\nanobot-setup.ps1
 ```
 
-`update.bat` uses a hybrid update strategy:
+The setup script uses a hybrid update strategy:
 
 - **FAST mode** — if `app/.git` exists, update via `git fetch` + `git reset --hard origin/main`
 - **FRESH mode** — if `app/` does not exist, check the installed Nanobot package and clone the latest source from GitHub only when needed
@@ -175,7 +184,7 @@ Simply delete the `nanobot-usb/` folder — nothing is installed on the system.
 ## Flow Diagram
 
 ```
-setup.bat
+nanobot-setup.ps1
    │
    ├─→ Download Python 3.14 Embedded → bin/
    ├─→ Install pip
@@ -188,12 +197,15 @@ setup.bat
    ├─→ Write .lockhead metadata
    └─→ Clean up app/ (staging only)
 
-start_gate.bat
+nanobot-gateway.ps1
+   │
+   ├─→ Set $env:HOME to data/home (portable Git)
    └─→ WebUI: http://127.0.0.1:8765 (config → channels.websocket.port)
 
-start_chat.bat
+nanobot-agent.ps1
    │
-   ├─→ Load .env
+   ├─→ Set $env:HOME to data/home (portable Git)
+   ├─→ Load .env (or .env.encrypted)
    ├─→ Resolve workspace path
    └─→ $ python -m nanobot agent --config data/config.json
 ```
