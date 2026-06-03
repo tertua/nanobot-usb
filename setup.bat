@@ -84,16 +84,7 @@ echo [2/4] Mengunduh PowerShell 7 portable...
 echo       URL: %PS7_URL%
 echo.
 
-powershell -NoProfile -Command ^
-    "try { ^
-        $ProgressPreference = 'SilentlyContinue'; ^
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; ^
-        Invoke-WebRequest -Uri '%PS7_URL%' -OutFile '%PS7_ZIP%' -UseBasicParsing; ^
-        exit 0 ^
-    } catch { ^
-        Write-Host \"Error: $_\" -ForegroundColor Red; ^
-        exit 1 ^
-    }"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\download.ps1" -Url "%PS7_URL%" -Out "%PS7_ZIP%"
 
 if errorlevel 1 (
     echo [ERROR] Gagal mengunduh PowerShell 7.
@@ -114,14 +105,7 @@ rem ── Extract PowerShell 7 ────────────────
 echo [3/4] Mengekstrak PowerShell 7...
 echo.
 
-powershell -NoProfile -Command ^
-    "try { ^
-        Expand-Archive -Path '%PS7_ZIP%' -DestinationPath '%PS7_DIR%' -Force; ^
-        exit 0 ^
-    } catch { ^
-        Write-Host \"Error: $_\" -ForegroundColor Red; ^
-        exit 1 ^
-    }"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\scripts\extract.ps1" -Zip "%PS7_ZIP%" -Dest "%PS7_DIR%"
 
 if errorlevel 1 (
     echo [ERROR] Gagal mengekstrak PowerShell 7.
