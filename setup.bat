@@ -23,6 +23,40 @@ echo ================================================================
 echo    NANOBOT PORTABLE SETUP - Bootstrap
 echo ================================================================
 echo.
+echo  This script will install the following components into
+echo  a fully self-contained portable environment at:
+echo    %ROOT%
+echo.
+echo  [1] PowerShell 7.x portable
+echo      - Required for running all Nanobot management scripts
+echo.
+echo  [2] Python 3.x portable (embed package + pip)
+echo      - Core runtime for the Nanobot AI agent
+echo.
+echo  [3] Git portable (MinGit)
+echo      - For repository cloning and version management
+echo.
+echo  [4] Node.js portable
+echo      - Required for web interface and MCP tools
+echo.
+echo  [5] Nanobot source code
+echo      - Cloned from GitHub repository
+echo.
+echo  [6] Python dependencies (via pip)
+echo      - nanobot package and required libraries
+echo.
+echo  [7] Configuration and lockfile setup
+echo      - Initial config.json, .env, and software versions
+echo.
+echo  All components are installed inside %ROOT%
+echo  and will NOT affect your host system.
+echo.
+echo ================================================================
+echo  Press any key to start installation, or close this window
+echo  to cancel.
+echo ================================================================
+pause >nul
+echo.
 
 rem ── Check minimum Windows version ─────────────────────────
 for /f "tokens=2 delims=[]" %%v in ('ver') do (
