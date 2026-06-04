@@ -66,7 +66,8 @@ def main():
     scripts_dir = os.path.join(root_dir, 'scripts')
     git_cmd = os.path.join(root_dir, 'bin', 'git', 'cmd')
     nodejs_dir = os.path.join(root_dir, 'bin', 'nodejs')
-    path_parts = [p for p in [py_dir, scripts_dir, git_cmd, nodejs_dir] if os.path.isdir(p) or 'git' in p or 'nodejs' in p]
+    pwsh_dir = os.path.join(root_dir, 'bin', 'pwsh')
+    path_parts = [p for p in [py_dir, scripts_dir, git_cmd, nodejs_dir, pwsh_dir] if os.path.isdir(p) or 'git' in p or 'nodejs' in p or 'pwsh' in p]
     exec_cfg['pathAppend'] = ';'.join(path_parts)
     exec_cfg['restrictToWorkspace'] = True
     tools['exec'] = exec_cfg

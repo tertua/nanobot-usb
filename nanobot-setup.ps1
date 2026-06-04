@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # setup.ps1 - Nanobot Portable Setup (PowerShell 7+)
-# > pwsh -NoProfile .\nanobot-setup.ps1
+#bin\pwsh7\pwsh -NoProfile .\nanobot-setup.ps1
 
 $ErrorActionPreference = "Stop"
 
@@ -22,6 +22,8 @@ $env:PIP_CACHE_DIR = Join-Path $TMP_DIR "pip-cache"
 $env:TMP  = $TMP_DIR
 $env:TEMP = $TMP_DIR
 $env:HOME = Join-Path $DATA_DIR "home"
+$env:HOMEPATH = Join-Path $DATA_DIR "home"
+$env:USERPROFILE = Join-Path $DATA_DIR "home"
 $env:NPM_CONFIG_CACHE  = Join-Path $TMP_DIR "npm-cache"
 $env:NPM_CONFIG_PREFIX = Join-Path $ROOT "bin\nodejs\global"
 
@@ -36,6 +38,12 @@ $ArchNode        = if ($ProcArch -eq "ARM64") { "arm64" } elseif ($Is64) { "x64"
 $ArchMinGit      = if ($Is64) { "64-bit" } else { "32-bit" }
 $ArchPwsh        = if ($ProcArch -eq "ARM64") { "arm64" } elseif ($Is64) { "x64" } else { "x86" }
 $MinGwDir        = if ($Is64) { "mingw64\bin" } else { "mingw32\bin" }
+
+# Software version
+$PyVer      = "3.12.0"
+$GitVer     = "2.54.0"
+$NodeVer    = "24.16.0"
+$PS7Ver     = "7.6.2"
 
 function Write-OK      { param([string]$T) Write-Host "         $T" -ForegroundColor Gray }
 function Write-Step    { param([string]$T) Write-Host "`n$T" -ForegroundColor Cyan }
@@ -67,6 +75,7 @@ if (Test-Path $LockFile) {
     Write-Host ""
     exit 0
 }
+
 # ===== STEP 1: INTERNET =====
 Write-Step "===== STEP 1: INTERNET CONNECTION ====="
 try {
@@ -129,7 +138,6 @@ if (Test-Path $PythonExe) {
     & $PythonExe --version
 } else {
     $PyArch = $ArchPython
-    $PyVer = "3.14.5"
     $PyUrl = "https://www.python.org/ftp/python/$PyVer/python-$PyVer-embed-$PyArch.zip"
     $PyZip = Join-Path $TMP_DIR "python-embed.zip"
     Write-Info "Download Python $PyVer ($PyArch)..."
@@ -162,6 +170,7 @@ if (Test-Path $PythonExe) {
     & $PythonExe --version
 }
 Write-OK ""
+
 # ===== STEP 4: PIP =====
 Write-Step "===== STEP 4: PREPARE PIP ====="
 $pipExists = $false
@@ -205,11 +214,10 @@ $GitReady = $false
 if (Test-Path (Join-Path $ROOT "bin\git\cmd\git.exe")) {
     Write-Info "Portable git found on USB."
     $GitReady = $true
-    $env:PATH = "$ROOT\bin\nodejs;$ROOT\bin\git\cmd;$ROOT\bin\git\$MinGwDir;$env:PATH"
+    $env:PATH = "$ROOT\bin\pwsh7;$ROOT\bin\nodejs;$ROOT\bin\git\cmd;$ROOT\bin\git\$MinGwDir;$env:PATH"
 } else {
     Write-Info "Git not found, downloading portable MinGit..."
     Write-Info "Download MinGit..."
-    $GitVer = "2.54.0"
     $GitUrl = "https://github.com/git-for-windows/git/releases/download/v${GitVer}.windows.1/MinGit-${GitVer}-${ArchMinGit}.zip"
     $GitZip = Join-Path $TMP_DIR "MinGit-${GitVer}-${ArchMinGit}.zip"
     Download-Helper -Url $GitUrl -Out $GitZip
@@ -246,11 +254,14 @@ if (Test-Path (Join-Path $ROOT "bin\git\cmd\git.exe")) {
         pause
         exit 1
     }
-    $env:PATH = "$ROOT\bin\nodejs;$ROOT\bin\git\cmd;$ROOT\bin\git\$MinGwDir;$env:PATH"
+    $env:PATH = "$ROOT\bin\pwsh7;$ROOT\bin\nodejs;$ROOT\bin\git\cmd;$ROOT\bin\git\$MinGwDir;$env:PATH"
 }
 Write-Info "Git:"
 & git --version
 Write-OK ""
+
+cls
+
 # ===== STEP 4.7: NODE.JS =====
 Write-Step "===== STEP 4.7: CHECK NODE.JS ====="
 $NodeDir = Join-Path $ROOT "bin\nodejs"
@@ -272,7 +283,6 @@ if (-not $NodeReady) {
 }
 if (-not $NodeReady) {
     Write-Info "Node.js not found, downloading portable..."
-    $NodeVer = "24.16.0"
     Write-Info "Download Node.js v$NodeVer ($ArchNode)..."
     $NodeZipUrl = "https://nodejs.org/dist/v$NodeVer/node-v$NodeVer-win-$ArchNode.zip"
     $NodeZip = Join-Path $TMP_DIR "node-v$NodeVer-win-$ArchNode.zip"
@@ -318,6 +328,7 @@ if ($NodeReady) {
 Write-OK ""
 TIMEOUT /T 11 /NOBREAK
 cls
+
 # ===== STEP 4.9: POWERSHELL 7 PORTABLE =====
 Write-Step "===== STEP 4.9: POWERSHELL 7 PORTABLE ====="
 $PS7Dir = Join-Path $ROOT "bin\pwsh7"
@@ -329,7 +340,6 @@ if (Test-Path $PS7Exe) {
     $PS7Ready = $true
 } else {
     Write-Info "PowerShell 7 not found, downloading portable..."
-    $PS7Ver = "7.6.2"
     $PS7Zip = Join-Path $TMP_DIR "PowerShell-$PS7Ver-win-$ArchPwsh.zip"
     $PS7Url = "https://github.com/PowerShell/PowerShell/releases/download/v$PS7Ver/PowerShell-$PS7Ver-win-$ArchPwsh.zip"
     Download-Helper -Url $PS7Url -Out $PS7Zip
@@ -356,6 +366,7 @@ if ($PS7Ready) {
 }
 Write-OK ""
 cls
+
 # ===== STEP 5: SOURCE CODE =====
 Write-Step "===== STEP 5: PREPARE NANOBOT SOURCE CODE ====="
 $SrcOk = $false
@@ -412,7 +423,7 @@ if (-not $SrcOk) {
     }
 }
 Write-OK ""
-cls
+
 # ===== PORTABLE PATHS PATCH =====
 $patchScript = Join-Path $SCRIPTS_DIR "portable_paths.py"
 if (Test-Path $patchScript) {
@@ -425,8 +436,9 @@ if (Test-Path $patchScript) {
     }
 }
 Write-OK ""
-TIMEOUT /T 6 /NOBREAK
+
 cls
+
 # ===== STEP 6: DEPENDENCIES =====
 Write-Step "===== STEP 6: INSTALL DEPENDENCIES ====="
 Write-Step "         [API ONLY MODE]"
@@ -441,16 +453,16 @@ Write-OK ""
 
 $ReqFile = Join-Path $SCRIPTS_DIR "requirements-api-only.txt"
 if (Test-Path $ReqFile) {
-    Write-Info "Build scripts\requirements-api-only.txt ..."
+    Write-Info "Built requirements-api-only.txt ..."
     & $PythonExe -m pip install --no-warn-script-location -r $ReqFile
 } else {
-    Write-Warn "requirements-api-only.txt not found."
+    Write-Warn "file scripts\requirements-api-only.txt not found."
     Write-Info "Install core packages manually..."
     & $PythonExe -m pip install --no-warn-script-location openai tiktoken fastapi uvicorn pydantic python-dotenv tqdm click numpy
 }
 Write-OK ""
 
-Write-Info "Build nanobot core..."
+Write-Info "Built nanobot core..."
 $env:NANOBOT_SKIP_WEBUI_BUILD = "1"
 $PyProject = Join-Path $APP_DIR "pyproject.toml"
 if (Test-Path $PyProject) {
@@ -466,8 +478,7 @@ Write-Header "  Installed packages:"
 & $PythonExe -m pip list 2>$null
 Write-Header "  ----------------------------------------"
 Write-OK ""
-TIMEOUT /T 11 /NOBREAK
-cls
+
 # ===== STEP 7: CONFIGURATION =====
 Write-Step "===== STEP 7: GENERATE CONFIGURATION ====="
 $env:NANOBOT_HOME = $DATA_DIR
@@ -477,7 +488,7 @@ if (Test-Path $ConfigFile) {
     Write-Info "config.json already exists. Skipping."
 } else {
     Write-Info "Generate config via nanobot onboard..."
-    & $PythonExe -m nanobot onboard --config $ConfigFile --workspace $WorkspaceDir
+    & $PythonExe -m nanobot onboard "--config=$ConfigFile" "--workspace=$WorkspaceDir"
     if (-not (Test-Path $ConfigFile)) {
         Write-Error "Failed to generate config.json!"
         pause
@@ -508,6 +519,7 @@ if (-not (Test-Path $EnvFile)) {
     Write-OK ".env already exists."
 }
 Write-OK ""
+
 # ===== CLEANUP PRE-BUILD FILES =====
 Remove-Item -Path (Join-Path $TMP_DIR "python-embed.zip") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $TMP_DIR "get-pip.py") -Force -ErrorAction SilentlyContinue
@@ -549,8 +561,10 @@ Write-OK ""
 # ===== FINAL CLEANUP =====
 if (Test-Path $APP_DIR) { Remove-Item -Path $APP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
 if (Test-Path $TMP_DIR) { Remove-Item -Path $TMP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
+TIMEOUT /T 11 /NOBREAK
 cls
-# ===== SETUP COMPLETE =====
+
+# ===== FINISH SETUP =====
 Write-Header ""
 Write-Header "  ==================================================="
 Write-Header "             SETUP COMPLETE!"

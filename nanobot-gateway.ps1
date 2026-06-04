@@ -22,6 +22,7 @@ $NANOBOT_HOME = $DATA_DIR
 $CONFIG    = Join-Path $NANOBOT_HOME "config.json"
 $WORKSPACE = Join-Path $NANOBOT_HOME "workspace"
 $HOME_DIR  = Join-Path $DATA_DIR "home"
+$USERPROFILE = $HOME_DIR
 
 # ── Read ports from config.json via Python ────────────────────────────
 $HTTP_PORT = $null
@@ -154,6 +155,8 @@ if (Test-Path $EnvFileEnc) {
 # ── Environment ─────────────────────────────────────────────────────
 $env:NANOBOT_HOME = $NANOBOT_HOME
 $env:HOME = $HOME_DIR
+$env:HOMEPATH = $HOME_DIR
+$env:USERPROFILE = $HOME_DIR
 
 # ── Inject portable PATH ────────────────────────────────────────────
 $PortablePaths = @(
