@@ -8,7 +8,22 @@ with date-based minor/patch releases.
 
 ---
 
-## [Unreleased]
+## [2026-06-04] — v1.0.2
+
+### Added
+
+- **Health check integration** — `healthcheck.py` now runs automatically at end of `nanobot-setup.ps1` for post-setup verification
+- **VBS extraction fallback** — `unzip.vbs` integrated into `extract.ps1` as method 4 when PowerShell/NET methods fail
+
+### Changed
+
+- `healthcheck.py` — rewritten with clearer checks: Python version, Nanobot module, config, .env, directories, lockhead
+- `extract.ps1` — added VBS fallback method for corporate environments with restricted PowerShell
+
+### Removed
+
+- `bootstrap.py` — redundant with existing setup.ps1 logic (download pip, install deps)
+- `launcher.py` — unused Python launcher (PowerShell launchers already handle this)
 
 ---
 

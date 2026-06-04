@@ -82,13 +82,11 @@ nanobot-usb/
 │   └── .env_key                    ← Optional passphrase cache
 ├── tmp/                            ← Portable temporary files and npm cache
 ├── scripts/
-│   ├── bootstrap.py                ← Bootstrap helper
 │   ├── download.ps1                ← Download utilities
-│   ├── extract.ps1                 ← Extract archives
+│   ├── extract.ps1                 ← Extract archives (with VBS fallback)
 │   ├── env_crypt.py                ← AES-256-GCM + scrypt encrypt/decrypt
 │   ├── edit_env.ps1                ← Safe .env editor with encryption
-│   ├── healthcheck.py              ← System readiness check
-│   ├── launcher.py                 ← Launcher utilities
+│   ├── healthcheck.py              ← Post-setup health verification
 │   ├── portable_paths.py           ← Apply portable paths patch
 │   ├── post_config.py              ← Initial config generation
 │   ├── resolve_workspace.py        ← Workspace resolver

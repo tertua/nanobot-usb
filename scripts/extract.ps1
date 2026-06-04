@@ -65,6 +65,26 @@ try {
     Write-Status "Metode 3 gagal: $($_.Exception.Message)"
 }
 
+# Metode 4: VBS fallback
+try {
+    Write-Status "Metode 4: VBS fallback (unzip.vbs)..."
+    $VbsScript = Join-Path $PSScriptRoot "unzip.vbs"
+    if (Test-Path $VbsScript) {
+        $result = & cscript //NoLogo $VbsScript $Zip $Dest 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Status "Extract success (VBS fallback)"
+            Write-Status "EXTRACT_SUCCESS"
+            exit 0
+        } else {
+            Write-Status "Metode 4 gagal: exit code $LASTEXITCODE"
+        }
+    } else {
+        Write-Status "Metode 4 gagal: unzip.vbs not found at $VbsScript"
+    }
+} catch {
+    Write-Status "Metode 4 gagal: $($_.Exception.Message)"
+}
+
 Write-Status "Semua metode extract gagal!"
 Write-Status "EXTRACT_FAILED"
 exit 1

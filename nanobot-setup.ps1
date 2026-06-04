@@ -558,6 +558,26 @@ if (-not (Test-Path (Join-Path $DATA_DIR ".lockhead"))) {
 Write-Info "    Please wait..."
 Write-OK ""
 
+# ===== HEALTH CHECK =====
+Write-Header ""
+Write-Header "  ==================================================="
+Write-Header "               HEALTH CHECK"
+Write-Header "  ==================================================="
+Write-Host ""
+Write-Info "Running system verification..."
+$HealthScript = Join-Path $SCRIPTS_DIR "healthcheck.py"
+if (Test-Path $HealthScript) {
+    & $PythonExe $HealthScript
+    if ($LASTEXITCODE -eq 0) {
+        Write-OK "Health check passed!"
+    } else {
+        Write-Warn "Health check reported warnings. Review output above."
+    }
+} else {
+    Write-Warn "healthcheck.py not found, skipping."
+}
+Write-OK ""
+
 # ===== FINAL CLEANUP =====
 if (Test-Path $APP_DIR) { Remove-Item -Path $APP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
 if (Test-Path $TMP_DIR) { Remove-Item -Path $TMP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
