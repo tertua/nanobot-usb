@@ -47,7 +47,7 @@ def _get_passphrase(prompt: str = "Passphrase") -> str:
     if "--noninteractive" in sys.argv:
         pwd = os.environ.get(_PASSPHRASE_ENV)
         if not pwd:
-            _log.error("Non-interactive mode but %s is not set", _PASSPHRASE_ENV)
+            _log.error("Non-interactive mode requires a configured passphrase environment variable")
             sys.exit(1)
         return pwd
     return getpass(f"  [{prompt}] ")
