@@ -5,17 +5,17 @@
 
 $ErrorActionPreference = 'Stop'
 
-# ── Root directory = script location ────────────────────────────────
+# -- Root directory = script location --------------------------------
 $ScriptDir = $PSScriptRoot
 if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $ROOT = $ScriptDir
 
 Set-Location $ROOT
 
-# ── UTF-8 output ────────────────────────────────────────────────────
+# -- UTF-8 output ----------------------------------------------------
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 
-# ── Paths ───────────────────────────────────────────────────────────
+# -- Paths -----------------------------------------------------------
 $PY        = Join-Path $ROOT "bin\python.exe"
 $DATA_DIR  = Join-Path $ROOT "data"
 $NANOBOT_HOME = $DATA_DIR
@@ -24,7 +24,7 @@ $WORKSPACE = Join-Path $NANOBOT_HOME "workspace"
 $HOME_DIR  = Join-Path $DATA_DIR "home"
 $USERPROFILE = $HOME_DIR
 
-# ── Read ports from config.json via Python ────────────────────────────
+# -- Read ports from config.json via Python ----------------------------
 $HTTP_PORT = $null
 $WS_PORT   = $null
 try {
@@ -45,21 +45,21 @@ if (-not $WS_PORT)   { $WS_PORT   = 8765 }
 
 $WS_HOST = "127.0.0.1"
 
-# ── Check Python ────────────────────────────────────────────────────
+# -- Check Python ----------------------------------------------------
 if (-not (Test-Path $PY)) {
     Write-Host "`n  [ERROR] Python not found: $PY" -ForegroundColor Red
     Write-Host "  Setup incomplete.`n" -ForegroundColor Red
     exit 1
 }
 
-# ── Check Config ────────────────────────────────────────────────────
+# -- Check Config ----------------------------------------------------
 if (-not (Test-Path $CONFIG)) {
     Write-Host "`n  [ERROR] Config not found: $CONFIG" -ForegroundColor Red
     Write-Host "  Run setup.bat or copy config first.`n" -ForegroundColor Red
     exit 1
 }
 
-# ── Check / kill process on target port ─────────────────────────────
+# -- Check / kill process on target port -----------------------------
 $portInUse = $false
 try {
     $netstat = netstat -ano | Select-String ":$WS_PORT " | Select-String "LISTENING"
@@ -86,11 +86,11 @@ if ($portInUse) {
     }
 }
 
-# ── Banner ──────────────────────────────────────────────────────────
+# -- Banner ----------------------------------------------------------
 Write-Host "`n"
-Write-Host "  $('═' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "       NANOBOT GATEWAY - Simata.id" -ForegroundColor Cyan
-Write-Host "  $('═' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "`n"
 
 Write-Host "  Home  : $NANOBOT_HOME" -ForegroundColor Green
@@ -102,7 +102,7 @@ Write-Host "  Port  : $WS_PORT" -ForegroundColor Green
 Write-Host "  $('=' * 47)" -ForegroundColor Cyan
 Write-Host "`n  Please wait..." -ForegroundColor Yellow
 
-# ── Resolve workspace from config.json ──────────────────────────────
+# -- Resolve workspace from config.json ------------------------------
 try {
     $ResolveScript = Join-Path $ROOT "scripts\resolve_workspace.py"
     if (Test-Path $ResolveScript) {
@@ -115,7 +115,7 @@ try {
     # fallback: keep default WORKSPACE
 }
 
-# ── Load .env (AES-GCM scrypt) ──────────────────────────────────────
+# -- Load .env (AES-GCM scrypt) --------------------------------------
 $EnvFileEnc = Join-Path $DATA_DIR ".env.encrypted"
 $EnvKeyFile = Join-Path $DATA_DIR ".env_key"
 $EnvTmpFile = Join-Path $DATA_DIR ".env.tmp"
@@ -152,13 +152,13 @@ if (Test-Path $EnvFileEnc) {
     }
 }
 
-# ── Environment ─────────────────────────────────────────────────────
+# -- Environment -----------------------------------------------------
 $env:NANOBOT_HOME = $NANOBOT_HOME
 $env:HOME = $HOME_DIR
 $env:HOMEPATH = $HOME_DIR
 $env:USERPROFILE = $HOME_DIR
 
-# ── Inject portable PATH ────────────────────────────────────────────
+# -- Inject portable PATH --------------------------------------------
 $PortablePaths = @(
     Join-Path $ROOT "bin"
     Join-Path $ROOT "bin\pwsh7"    
@@ -170,7 +170,7 @@ $PortablePaths = @(
 )
 $env:PATH = ($PortablePaths -join ';') + ';' + $env:PATH
 
-# ── Kill existing processes on same ports ──────────────────────────
+# -- Kill existing processes on same ports --------------------------
 try {
     netstat -ano | Select-String ":$HTTP_PORT " | Select-String "LISTENING" | ForEach-Object {
         if ($_ -match '\s+(\d+)$') {
@@ -187,7 +187,7 @@ try {
 Write-Host "`n"
 Write-Host "  Browser: http://$WS_HOST`:$WS_PORT" -ForegroundColor Green
 
-# ── 10-second countdown ──────────────────────────────────────────────
+# -- 10-second countdown ----------------------------------------------
 Write-Host "`n  Starting Gateway in 10 seconds..." -ForegroundColor Yellow
 for ($i = 10; $i -ge 1; $i--) {
     Write-Host "  `r$i second(s) remaining..." -NoNewline
@@ -200,7 +200,7 @@ Write-Host "  HTTP Port : $HTTP_PORT (for Health/API)" -ForegroundColor Gray
 Write-Host "  WS Port   : $WS_PORT (for WebSocket/UI)" -ForegroundColor Gray
 Write-Host "`n"
 
-# ── Run Gateway ──────────────────────────────────────────────────────
+# -- Run Gateway ------------------------------------------------------
 try {
     & $PY -m nanobot gateway `
         "--config=$CONFIG" `

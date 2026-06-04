@@ -210,7 +210,7 @@ cls
 Write-Step "===== STEP 4.5: CHECK GIT ====="
 $GitReady = $false
 
-# Always use portable MinGit — ignore host system Git
+# Always use portable MinGit -- ignore host system Git
 if (Test-Path (Join-Path $ROOT "bin\git\cmd\git.exe")) {
     Write-Info "Portable git found on USB."
     $GitReady = $true

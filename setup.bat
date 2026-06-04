@@ -8,16 +8,16 @@ rem ==========================================================
 
 title Nanobot Portable Build
 
-rem ── Root directory (script location) ─────────────────────
+rem -- Root directory (script location) ---------------------
 set "ROOT=%~dp0"
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 
 cd /d "%ROOT%"
 
-rem ── UTF-8 console ─────────────────────────────────────────
+rem -- UTF-8 console -----------------------------------------
 chcp 65001 >nul 2>&1
 
-rem ── Banner ────────────────────────────────────────────────
+rem -- Banner ------------------------------------------------
 echo.
 echo  This script will build the requirement components
 echo.
@@ -45,7 +45,7 @@ echo.
 
 TIMEOUT /T 11 /NOBREAK
 
-rem ── Check minimum Windows version ─────────────────────────
+rem -- Check minimum Windows version -------------------------
 for /f "tokens=2 delims=[]" %%v in ('ver') do (
     for /f "tokens=2" %%a in ("%%v") do (
         for /f "tokens=1 delims=." %%b in ("%%a") do set "WIN_VER=%%b"
@@ -59,7 +59,7 @@ if %WIN_VER% LSS 10 (
     exit /b 1
 )
 
-rem ── Paths ─────────────────────────────────────────────────
+rem -- Paths -------------------------------------------------
 set "BIN_DIR=%ROOT%\bin"
 set "TMP_DIR=%ROOT%\tmp"
 set "PS7_DIR=%BIN_DIR%\pwsh7"
@@ -67,11 +67,11 @@ set "PS7_EXE=%PS7_DIR%\pwsh.exe"
 set "PS7_ZIP=%TMP_DIR%\pwsh7.zip"
 set "SETUP_SCRIPT=%ROOT%\nanobot-setup.ps1"
 
-rem ── Create temp directory ─────────────────────────────────
+rem -- Create temp directory ---------------------------------
 if not exist "%TMP_DIR%" mkdir "%TMP_DIR%"
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
-rem ── Check if PowerShell 7 already installed ───────────────
+rem -- Check if PowerShell 7 already installed ---------------
 if exist "%PS7_EXE%" (
     echo [OK] PowerShell 7 sudah terinstall: %PS7_DIR%
     echo.
@@ -81,7 +81,7 @@ if exist "%PS7_EXE%" (
 echo [INFO] PowerShell 7 tidak ditemukan. Memulai instalasi...
 echo.
 
-rem ── Detect architecture ───────────────────────────────────
+rem -- Detect architecture -----------------------------------
 echo [1/4] Mendeteksi arsitektur sistem...
 for /f "usebackq tokens=*" %%a in (`powershell -NoProfile -Command "[Environment]::Is64BitOperatingSystem"`) do set "IS64=%%a"
 for /f "usebackq tokens=*" %%a in (`powershell -NoProfile -Command "[Environment]::GetEnvironmentVariable('PROCESSOR_ARCHITECTURE')"`) do set "PROC_ARCH=%%a"
@@ -97,7 +97,7 @@ if /i "%PROC_ARCH%"=="ARM64" (
 echo       Arsitektur: %ARCH%
 echo.
 
-rem ── Download PowerShell 7 ─────────────────────────────────
+rem -- Download PowerShell 7 ---------------------------------
 set "PS7_VER=7.6.2"
 set "PS7_URL=https://github.com/PowerShell/PowerShell/releases/download/v%PS7_VER%/PowerShell-%PS7_VER%-win-%ARCH%.zip"
 
@@ -122,7 +122,7 @@ if not exist "%PS7_ZIP%" (
 echo       Download selesai: %PS7_ZIP%
 echo.
 
-rem ── Extract PowerShell 7 ──────────────────────────────────
+rem -- Extract PowerShell 7 ----------------------------------
 echo [3/4] Mengekstrak PowerShell 7...
 echo.
 
@@ -143,7 +143,7 @@ if not exist "%PS7_EXE%" (
 echo       Ekstraksi selesai: %PS7_DIR%
 echo.
 
-rem ── Cleanup ───────────────────────────────────────────────
+rem -- Cleanup -----------------------------------------------
 echo [4/4] Membersihkan file sementara...
 del /f /q "%PS7_ZIP%" >nul 2>&1
 echo       Cleanup selesai.
@@ -152,7 +152,7 @@ echo.
 echo [OK] PowerShell 7 portable berhasil diinstal.
 echo.
 
-rem ── Run main setup ────────────────────────────────────────
+rem -- Run main setup ----------------------------------------
 :run_setup
 echo ================================================================
 echo    Menjalankan Setup Utama (nanobot-setup.ps1)

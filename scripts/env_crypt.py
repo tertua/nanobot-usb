@@ -1,6 +1,6 @@
 """Password-based .env encryption for Nanobot Portable.
 
-AES-256-GCM with scrypt key derivation — fully portable across Windows
+AES-256-GCM with scrypt key derivation -- fully portable across Windows
 machines. No dependency on DPAPI, TPM, or Windows user identity.
 
 Security: OWASP 2023 scrypt parameters (N=1<<20, r=8, p=1).

@@ -4,17 +4,17 @@
 
 $ErrorActionPreference = 'Stop'
 
-# ── Root directory = script location ────────────────────────────────
+# -- Root directory = script location --------------------------------
 $ScriptDir = $PSScriptRoot
 if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $ROOT = $ScriptDir
 
 Set-Location $ROOT
 
-# ── UTF-8 output ────────────────────────────────────────────────────
+# -- UTF-8 output ----------------------------------------------------
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 
-# ── Paths ───────────────────────────────────────────────────────────
+# -- Paths -----------------------------------------------------------
 $PY             = Join-Path $ROOT "bin\python.exe"
 $DATA_DIR       = Join-Path $ROOT "data"
 $NANOBOT_HOME   = $DATA_DIR
@@ -23,28 +23,28 @@ $WORKSPACE      = Join-Path $NANOBOT_HOME "workspace"
 $HOME_DIR       = Join-Path $NANOBOT_HOME "home"
 $USERPROFILE    = $HOME_DIR
 
-# ── Check Python ────────────────────────────────────────────────────
+# -- Check Python ----------------------------------------------------
 if (-not (Test-Path $PY)) {
     Write-Host "`n  [ERROR] Python not found: $PY" -ForegroundColor Red
     Write-Host "  Setup incomplete.`n" -ForegroundColor Red
     exit 1
 }
 
-# ── Check Config ────────────────────────────────────────────────────
+# -- Check Config ----------------------------------------------------
 if (-not (Test-Path $CONFIG)) {
     Write-Host "`n  [ERROR] Config not found: $CONFIG" -ForegroundColor Red
     Write-Host "  Run setup.bat or copy config first.`n" -ForegroundColor Red
     exit 1
 }
 
-# ── Banner ──────────────────────────────────────────────────────────
+# -- Banner ----------------------------------------------------------
 Write-Host "`n"
-Write-Host "  $('═' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "       NANOBOT PORTABLE - Simata.id" -ForegroundColor Cyan
-Write-Host "  $('═' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "`n"
 
-# ── Load .env (AES-GCM scrypt) ──────────────────────────────────────
+# -- Load .env (AES-GCM scrypt) --------------------------------------
 $EnvFileEnc = Join-Path $DATA_DIR ".env.encrypted"
 $EnvKeyFile = Join-Path $DATA_DIR ".env_key"
 $EnvTmpFile = Join-Path $DATA_DIR ".env.tmp"
@@ -82,13 +82,13 @@ if (Test-Path $EnvFileEnc) {
     }
 }
 
-# ── Environment ─────────────────────────────────────────────────────
+# -- Environment -----------------------------------------------------
 $env:NANOBOT_HOME = $NANOBOT_HOME
 $env:HOME = $HOME_DIR
 $env:HOMEPATH = $HOME_DIR
 $env:USERPROFILE = $HOME_DIR
 
-# ── Inject portable PATH ────────────────────────────────────────────
+# -- Inject portable PATH --------------------------------------------
 $PortablePaths = @(
     Join-Path $ROOT "bin"
     Join-Path $ROOT "bin\pwsh7"
@@ -100,7 +100,7 @@ $PortablePaths = @(
 )
 $env:PATH = ($PortablePaths -join ';') + ';' + $env:PATH
 
-# ── Resolve workspace from config.json ──────────────────────────────
+# -- Resolve workspace from config.json ------------------------------
 try {
     $ResolveScript = Join-Path $ROOT "scripts\resolve_workspace.py"
     if (Test-Path $ResolveScript) {
@@ -113,7 +113,7 @@ try {
     # fallback: keep default WORKSPACE
 }
 
-# ── Info ────────────────────────────────────────────────────────────
+# -- Info ------------------------------------------------------------
 Write-Host "  $('=' * 47)" -ForegroundColor Cyan
 Write-Host "`n"
 Write-Host "  Home  : $NANOBOT_HOME" -ForegroundColor Green
@@ -121,9 +121,9 @@ Write-Host "  Conf  : $CONFIG" -ForegroundColor Green
 Write-Host "  Works : $WORKSPACE" -ForegroundColor Green
 Write-Host "`n"
 Write-Host "  $('=' * 47)" -ForegroundColor Cyan
-Write-Host "`n  Type your command, then press Esc → Enter`n" -ForegroundColor Yellow
+Write-Host "`n  Type your command, then press Esc -> Enter`n" -ForegroundColor Yellow
 
-# ── Run Agent ───────────────────────────────────────────────────────
+# -- Run Agent -------------------------------------------------------
 try {
     & $PY -m nanobot agent "--config=$CONFIG"
     $exitCode = $LASTEXITCODE
