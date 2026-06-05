@@ -40,8 +40,7 @@ The script will automatically:
 
 **Option A -- Safe editor (automatic encryption):**
 ```powershell
-.\scripts\edit_env.ps1    # PowerShell version
-edit_env.bat              # Batch version (if available)
+edit_env.bat              # Batch version
 ```
 Opens Notepad with `data\.env` contents. Add your API key, save, close Notepad --
 the file is automatically encrypted to `data\.env.encrypted` (AES-256-GCM).
