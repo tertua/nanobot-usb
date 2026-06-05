@@ -1,6 +1,6 @@
 ![nanobot README cover](https://rawcdn.githack.com/HKUDS/nanobot/851150fcd8f72461cea398d56d20f18766232aa3/images/readme-cover.png)
 
-# [BOT] Nanobot Portable for Windows
+# Nanobot Portable for Windows
 
 > **Info:** Latest portable version -- Python Embedded, MinGit, and Node.js are all bundled in `bin/`. The `app/` folder is temporary (cleaned up after setup). 
 > See [CHANGELOG.md](CHANGELOG.md) for full history.
@@ -8,14 +8,14 @@
 Portable version of **nanobot-ai** that runs without installation on host.
 Just extract, setup, and go!
 
-## [DOC] Requirements
+## Requirements
 
 - **Windows 10/11** (64-bit)
 - **PowerShell 7+** (recommended for .ps1 scripts)
 - **Internet connection** (for setup and API calls)
 - **~500MB** disk space
 
-## [LAUNCH] Quick Start
+## Quick Start
 
 ### Step 1: Setup
 ```powershell
@@ -60,7 +60,7 @@ Replace `sk-your-api-key-here` with your OpenAI Compatible API key.
 
 Gateway will display the browser address (default: http://127.0.0.1:8765, see config.json -> channels.websocket.port)
 
-## [DIR] Directory Structure
+## Directory Structure
 
 ```
 nanobot-usb/
@@ -95,7 +95,7 @@ nanobot-usb/
 |   +-- requirements-api-only.txt   <- Minimal API dependencies
 ```
 
-## [LOCK] .env Encryption
+## Encryption .env
 
 API keys are securely stored using **AES-256-GCM** with **scrypt key derivation** (OWASP 2023).
 
@@ -129,7 +129,7 @@ start_gate.bat / start_chat.bat
 > **Security:** Without `data/.env_key`, passphrase is prompted on every startup.
 > Delete `.env_key` to return to interactive mode. Passphrase stays in your head, not on disk.
 
-## [TOOL] Troubleshooting
+## Troubleshooting
 
 ### Python not found
 Re-run `setup.bat`
@@ -149,7 +149,7 @@ Edit `data/config.json`:
 bin\python.exe scripts\healthcheck.py
 ```
 
-## [WEB] Using Other Providers
+## Using Other Providers
 
 ### Azure OpenAI
 ```env
@@ -159,7 +159,7 @@ OPENAI_API_KEY=your-azure-key
 AZURE_API_VERSION=2023-12-01-preview
 ```
 
-## [SYNC] Update to Latest Version
+## Update to Latest Version
 
 ```powershell
 # Re-run setup to update:
@@ -173,7 +173,7 @@ The setup script uses a hybrid update strategy:
 
 Runtime is built-in `bin/Lib/site-packages/`. The `app/` folder is only a temporary staging clone and safely removed after setup/update completed.
 
-## [CLEAN] Uninstall
+## Uninstall
 
 Simply delete the `nanobot-usb/` folder -- nothing is installed on the system.
 
