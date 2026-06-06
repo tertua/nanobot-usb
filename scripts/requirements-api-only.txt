@@ -49,6 +49,7 @@ croniter>=6.0.0,<7.0.0
 prompt-toolkit>=3.0.50,<4.0.0
 readability-lxml>=0.8.4,<1.0.0
 tzdata
+pywin32
 
 # --- Chat Apps ---
 python-telegram-bot[webhooks]>=22.6,<23.0

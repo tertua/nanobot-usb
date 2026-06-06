@@ -40,7 +40,7 @@ $ArchPwsh        = if ($ProcArch -eq "ARM64") { "arm64" } elseif ($Is64) { "x64"
 $MinGwDir        = if ($Is64) { "mingw64\bin" } else { "mingw32\bin" }
 
 # Software version
-$PyVer      = "3.12.0"
+$PyVer      = "3.14.5"
 $GitVer     = "2.54.0"
 $NodeVer    = "24.16.0"
 $PS7Ver     = "7.6.2"
@@ -203,9 +203,6 @@ if ($pipExists) {
 }
 Write-OK ""
 
-TIMEOUT /T 6 /NOBREAK
-cls
-
 # ===== STEP 4.5: GIT =====
 Write-Step "===== STEP 4.5: CHECK GIT ====="
 $GitReady = $false
@@ -259,8 +256,6 @@ if (Test-Path (Join-Path $ROOT "bin\git\cmd\git.exe")) {
 Write-Info "Git:"
 & git --version
 Write-OK ""
-
-cls
 
 # ===== STEP 4.7: NODE.JS =====
 Write-Step "===== STEP 4.7: CHECK NODE.JS ====="
@@ -326,8 +321,6 @@ if ($NodeReady) {
     & $NodeExe --version
 }
 Write-OK ""
-TIMEOUT /T 11 /NOBREAK
-cls
 
 # ===== STEP 4.9: POWERSHELL 7 PORTABLE =====
 Write-Step "===== STEP 4.9: POWERSHELL 7 PORTABLE ====="
@@ -365,7 +358,6 @@ if ($PS7Ready) {
     $env:PATH = "$PS7Dir;$env:PATH"
 }
 Write-OK ""
-cls
 
 # ===== STEP 5: SOURCE CODE =====
 Write-Step "===== STEP 5: PREPARE NANOBOT SOURCE CODE ====="
@@ -436,8 +428,6 @@ if (Test-Path $patchScript) {
     }
 }
 Write-OK ""
-
-cls
 
 # ===== STEP 6: DEPENDENCIES =====
 Write-Step "===== STEP 6: INSTALL DEPENDENCIES ====="
@@ -581,8 +571,6 @@ Write-OK ""
 # ===== FINAL CLEANUP =====
 if (Test-Path $APP_DIR) { Remove-Item -Path $APP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
 if (Test-Path $TMP_DIR) { Remove-Item -Path $TMP_DIR -Recurse -Force -ErrorAction SilentlyContinue }
-TIMEOUT /T 11 /NOBREAK
-cls
 
 # ===== FINISH SETUP =====
 Write-Header ""

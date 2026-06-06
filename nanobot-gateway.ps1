@@ -187,15 +187,6 @@ try {
 Write-Host "`n"
 Write-Host "  Browser: http://$WS_HOST`:$WS_PORT" -ForegroundColor Green
 
-# -- 10-second countdown ----------------------------------------------
-Write-Host "`n  Starting Gateway in 10 seconds..." -ForegroundColor Yellow
-for ($i = 10; $i -ge 1; $i--) {
-    Write-Host "  `r$i second(s) remaining..." -NoNewline
-    Start-Sleep -Seconds 1
-}
-Write-Host "`r                              " -NoNewline
-Write-Host "`n"
-
 Write-Host "  HTTP Port : $HTTP_PORT (for Health/API)" -ForegroundColor Gray
 Write-Host "  WS Port   : $WS_PORT (for WebSocket/UI)" -ForegroundColor Gray
 Write-Host "`n"
