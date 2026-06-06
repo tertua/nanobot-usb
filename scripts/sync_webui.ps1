@@ -22,6 +22,12 @@ $DATA_DIR = Join-Path $ROOT "data"
 $DropDir  = Join-Path $DATA_DIR "webui"
 
 # -- Locate Python + site-packages -----------------------------------------
+# Lite's portable Python has a fixed layout: bin\python.exe with
+# bin\Lib\site-packages. Hardcode the site-packages path; do not call
+# `python -c "import site; ..."` because in some embedded/portable Python
+# builds (including Lite's), `site.getsitepackages()[0]` returns the
+# executable's directory (bin\) instead of the site-packages directory,
+# which would give the wrong path for nanobot\web.
 $PythonExe = Join-Path $ROOT "bin\python.exe"
 if (-not (Test-Path $PythonExe)) {
     Write-Host "[ERROR] Python not found: $PythonExe" -ForegroundColor Red
@@ -29,12 +35,12 @@ if (-not (Test-Path $PythonExe)) {
     exit 1
 }
 
-$SitePkgs = & $PythonExe -c "import site; print(site.getsitepackages()[0])" 2>$null
-if ($LASTEXITCODE -ne 0 -or -not $SitePkgs) {
-    Write-Host "[ERROR] Could not resolve site-packages from $PythonExe" -ForegroundColor Red
+$SitePkgs = Join-Path $ROOT "bin\Lib\site-packages"
+if (-not (Test-Path $SitePkgs)) {
+    Write-Host "[ERROR] site-packages not found: $SitePkgs" -ForegroundColor Red
+    Write-Host "         Re-run setup.bat to install Python + nanobot." -ForegroundColor Red
     exit 1
 }
-$SitePkgs = $SitePkgs.Trim()
 
 $WebPkgInit = Join-Path $SitePkgs "nanobot\web\__init__.py"
 $DistDir    = Join-Path $SitePkgs "nanobot\web\dist"
