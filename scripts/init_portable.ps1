@@ -41,6 +41,49 @@ if (-not (Test-Path (Join-Path $HOME_DIR "AppData\Local"))) {
 if (-not (Test-Path (Join-Path $HOME_DIR "AppData\Roaming"))) { 
     New-Item -ItemType Directory -Path (Join-Path $HOME_DIR "AppData\Roaming") -Force | Out-Null 
 }
-if (-not (Test-Path $TMP_DIR)) { 
-    New-Item -ItemType Directory -Path $TMP_DIR -Force | Out-Null 
+if (-not (Test-Path $TMP_DIR)) {
+    New-Item -ItemType Directory -Path $TMP_DIR -Force | Out-Null
+}
+
+function Load-EnvEncrypted {
+    param(
+        [string]$Root,
+        [string]$DataDir,
+        [string]$Python
+    )
+
+    $EnvFileEnc = Join-Path $DataDir ".env.encrypted"
+    $EnvKeyFile = Join-Path $DataDir ".env_key"
+    $EnvTmpFile = Join-Path $DataDir ".env.tmp"
+    $EnvPlain   = Join-Path $DataDir ".env"
+
+    if (Test-Path $EnvFileEnc) {
+        if (Test-Path $EnvKeyFile) {
+            $env:NANOBOT_ENV_KEY = (Get-Content -Path $EnvKeyFile -TotalCount 1).Trim()
+            & $Python (Join-Path $Root "scripts\env_crypt.py") load --noninteractive
+        } else {
+            & $Python (Join-Path $Root "scripts\env_crypt.py") load
+        }
+
+        if (Test-Path $EnvTmpFile) {
+            Get-Content -Path $EnvTmpFile | ForEach-Object {
+                $idx = $_.IndexOf('=')
+                if ($idx -gt 0) {
+                    $name = $_.Substring(0, $idx).Trim()
+                    $val  = $_.Substring($idx + 1).Trim()
+                    [Environment]::SetEnvironmentVariable($name, $val, 'Process')
+                }
+            }
+            Remove-Item -Path $EnvTmpFile -Force
+        }
+    } elseif (Test-Path $EnvPlain) {
+        Get-Content -Path $EnvPlain | ForEach-Object {
+            $idx = $_.IndexOf('=')
+            if ($idx -gt 0) {
+                $name = $_.Substring(0, $idx).Trim()
+                $val  = $_.Substring($idx + 1).Trim()
+                [Environment]::SetEnvironmentVariable($name, $val, 'Process')
+            }
+        }
+    }
 }

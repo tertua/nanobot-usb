@@ -124,41 +124,7 @@ try {
 }
 
 # -- Load .env (AES-GCM scrypt) --------------------------------------
-$EnvFileEnc = Join-Path $DATA_DIR ".env.encrypted"
-$EnvKeyFile = Join-Path $DATA_DIR ".env_key"
-$EnvTmpFile = Join-Path $DATA_DIR ".env.tmp"
-$EnvPlain   = Join-Path $DATA_DIR ".env"
-
-if (Test-Path $EnvFileEnc) {
-    if (Test-Path $EnvKeyFile) {
-        $ENV_KEY = (Get-Content -Path $EnvKeyFile -TotalCount 1).Trim()
-        $env:NANOBOT_ENV_KEY = $ENV_KEY
-        & $PY (Join-Path $ROOT "scripts\env_crypt.py") load --noninteractive
-    } else {
-        & $PY (Join-Path $ROOT "scripts\env_crypt.py") load
-    }
-
-    if (Test-Path $EnvTmpFile) {
-        Get-Content -Path $EnvTmpFile | ForEach-Object {
-			$idx = $_.IndexOf('=')
-			if ($idx -gt 0) {
-				$name = $_.Substring(0, $idx).Trim()
-				$val  = $_.Substring($idx + 1).Trim()
-				[Environment]::SetEnvironmentVariable($name, $val, 'Process')
-			}
-        }
-        Remove-Item -Path $EnvTmpFile -Force
-    }
-} elseif (Test-Path $EnvPlain) {
-    Get-Content -Path $EnvPlain | ForEach-Object {
-		$idx = $_.IndexOf('=')
-		if ($idx -gt 0) {
-			$name = $_.Substring(0, $idx).Trim()
-			$val  = $_.Substring($idx + 1).Trim()
-			[Environment]::SetEnvironmentVariable($name, $val, 'Process')
-		}
-    }
-}
+Load-EnvEncrypted -Root $ROOT -DataDir $DATA_DIR -Python $PY
 
 # -- Inject portable PATH --------------------------------------------
 $PortablePaths = @(
