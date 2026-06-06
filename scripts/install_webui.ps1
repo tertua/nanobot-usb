@@ -43,15 +43,27 @@ if (-not (Test-Path $WebPkgJson)) {
 }
 
 # -- Resolve npm ------------------------------------------------------------
-$npm = Get-Command "npm" -ErrorAction SilentlyContinue
-if (-not $npm) {
-    Write-Host "[ERROR] npm not found in PATH." -ForegroundColor Red
+# Try portable npm at bin\nodejs\npm.cmd (Lite's standard location, set up
+# by setup.bat). Fall back to system npm if portable not found. Direct path
+# lookup — does not depend on $env:PATH being set by the caller.
+$npmPath = $null
+$portableNpm = Join-Path $ROOT "bin\nodejs\npm.cmd"
+if (Test-Path $portableNpm) {
+    $npmPath = $portableNpm
+} else {
+    $sysNpm = Get-Command "npm" -ErrorAction SilentlyContinue
+    if ($sysNpm) { $npmPath = $sysNpm.Source }
+}
+if (-not $npmPath) {
+    Write-Host "[ERROR] npm not found." -ForegroundColor Red
+    Write-Host "         Expected portable: $portableNpm" -ForegroundColor Red
+    Write-Host "         Or system npm in PATH." -ForegroundColor Red
     Write-Host "         Re-run setup.bat to install Node.js into bin\." -ForegroundColor Red
     exit 1
 }
 
 Write-Host "[OK] Runner: npm" -ForegroundColor Green
-Write-Host "     Path:  $($npm.Source)"
+Write-Host "     Path:  $npmPath"
 
 # -- Run install ------------------------------------------------------------
 Write-Host ""
@@ -59,7 +71,7 @@ Write-Host "[INFO] Running 'npm install' in app\webui..." -ForegroundColor Cyan
 Write-Host "       (first run may take several minutes for ~250MB node_modules)"
 Push-Location $WebuiDir
 try {
-    & $npm.Source install
+    & $npmPath install
     if ($LASTEXITCODE -ne 0) {
         Pop-Location
         Write-Host "[ERROR] npm install failed (exit $LASTEXITCODE)" -ForegroundColor Red
@@ -75,7 +87,7 @@ try {
 Write-Host ""
 Write-Host "[INFO] Running 'npm run build' in app\webui..." -ForegroundColor Cyan
 try {
-    & $npm.Source run build
+    & $npmPath run build
     if ($LASTEXITCODE -ne 0) {
         Pop-Location
         Write-Host "[ERROR] npm run build failed (exit $LASTEXITCODE)" -ForegroundColor Red
