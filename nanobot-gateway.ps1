@@ -160,12 +160,6 @@ if (Test-Path $EnvFileEnc) {
     }
 }
 
-# -- Environment -----------------------------------------------------
-$env:NANOBOT_HOME = $NANOBOT_HOME
-$env:HOME = $HOME_DIR
-$env:HOMEPATH = $HOME_DIR
-$env:USERPROFILE = $HOME_DIR
-
 # -- Inject portable PATH --------------------------------------------
 $PortablePaths = @(
     Join-Path $ROOT "bin"

@@ -23,7 +23,7 @@ $Env:LOCALAPPDATA     = Join-Path $HOME_DIR "AppData\Local"
 $Env:APPDATA          = Join-Path $HOME_DIR "AppData\Roaming"
 $Env:TMP              = $TMP_DIR
 $Env:TEMP             = $TMP_DIR
-$Env:NANOBOT_HOME     = $HOME_DIR
+$Env:NANOBOT_HOME     = $DATA_DIR
 $Env:GH_CONFIG_DIR 	  = $APPDATA
 
 # -- Python/Node.js cache paths ---------------------------------------
