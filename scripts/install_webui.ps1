@@ -4,14 +4,22 @@
 #
 # Why: Lite sets NANOBOT_SKIP_WEBUI_BUILD=1 in install_deps.ps1, so the upstream
 # hatch hook never builds nanobot\web\dist\. This script is the manual
-# equivalent: detect runner (bun > npm), run install + build, then call
-# sync_webui.ps1 to push the build into bin\Lib\site-packages\nanobot\web\dist\.
+# equivalent: run npm install + build, then call sync_webui.ps1 to push the
+# build into bin\Lib\site-packages\nanobot\web\dist\.
+#
+# Runner: npm only. Lite redirects HOME/USERPROFILE to the USB via
+# init_portable.ps1, which makes bun's HOME-relative package store
+# (~/.bun/install/cache) land on exFAT/FAT32 where MoveFileEx returns EINVAL.
+# Bun's --no-cache flag only skips the manifest cache, not the package store,
+# and there is no env var to override the cache dir. npm's flat node_modules
+# writes work on every filesystem, so npm is the only path that is truly
+# portable. Bun is not used here.
 #
 # Failure: exits 1 with clear error. setup.bat is unaffected (this is a
 # separate, manual step). User can re-run build-webui.bat to retry.
 #
-# Idempotent: bun download skipped if bin/bun/bun.exe exists; npm/bun
-# install is incremental (skips already-installed packages).
+# Idempotent: npm install is incremental (skips already-installed packages).
+# node_modules persists across runs.
 
 $ErrorActionPreference = 'Stop'
 
@@ -25,7 +33,6 @@ $WebuiDir  = Join-Path $ROOT "app\webui"
 $WebPkgJson = Join-Path $WebuiDir "package.json"
 $BuildOut  = Join-Path $ROOT "app\nanobot\web\dist"
 $IndexOut  = Join-Path $BuildOut "index.html"
-$BunExe    = Join-Path $ROOT "bin\bun\bun.exe"
 
 # -- Pre-flight: source must be cloned --------------------------------------
 if (-not (Test-Path $WebPkgJson)) {
@@ -35,131 +42,48 @@ if (-not (Test-Path $WebPkgJson)) {
     exit 1
 }
 
-# -- Resolve runner ---------------------------------------------------------
-# Priority: portable bun in bin\bun\ > system bun > auto-install bun > npm fallback
-$runner = $null
-$runnerLabel = $null
-
-# 1. Portable bun (Lite convention: prefer local to avoid host pollution)
-if (Test-Path $BunExe) {
-    $runner = $BunExe
-    $runnerLabel = "portable bun"
-}
-
-# 2. System bun
-if (-not $runner) {
-    $sysBun = Get-Command "bun" -ErrorAction SilentlyContinue
-    if ($sysBun) {
-        $runner = $sysBun.Source
-        $runnerLabel = "system bun"
-    }
-}
-
-# 3. Auto-install portable bun
-if (-not $runner) {
-    Write-Host "[INFO] bun not found, attempting auto-install..." -ForegroundColor Cyan
-    $installBun = Join-Path $ScriptDir "install_bun.ps1"
-    if (Test-Path $installBun) {
-        try {
-            & $installBun
-            if ($LASTEXITCODE -eq 0 -and (Test-Path $BunExe)) {
-                $runner = $BunExe
-                $runnerLabel = "auto-installed bun"
-            }
-        } catch {
-            Write-Host "[WARN] bun install failed: $_" -ForegroundColor Yellow
-        }
-    }
-}
-
-# 4. npm fallback (Node.js always installed by setup.bat)
-if (-not $runner) {
-    Write-Host "[WARN] bun unavailable, falling back to npm..." -ForegroundColor Yellow
-    $sysNpm = Get-Command "npm" -ErrorAction SilentlyContinue
-    if ($sysNpm) {
-        $runner = $sysNpm.Source
-        $runnerLabel = "npm (fallback)"
-    }
-}
-
-if (-not $runner) {
-    Write-Host "[ERROR] No build runner available." -ForegroundColor Red
-    Write-Host "         Tried: portable bun, system bun, auto-install bun, system npm." -ForegroundColor Red
-    Write-Host "         Ensure Node.js is installed (run setup.bat)." -ForegroundColor Red
+# -- Resolve npm ------------------------------------------------------------
+$npm = Get-Command "npm" -ErrorAction SilentlyContinue
+if (-not $npm) {
+    Write-Host "[ERROR] npm not found in PATH." -ForegroundColor Red
+    Write-Host "         Re-run setup.bat to install Node.js into bin\." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "[OK] Runner: $runnerLabel" -ForegroundColor Green
-Write-Host "     Path:  $runner"
+Write-Host "[OK] Runner: npm" -ForegroundColor Green
+Write-Host "     Path:  $($npm.Source)"
 
 # -- Run install ------------------------------------------------------------
-# Try $runner first (bun preferred for speed). If bun fails, retry with npm.
-# Lite redirects HOME/USERPROFILE to the USB via init_portable.ps1, so bun's
-# package store (~/.bun/install/cache) lands on exFAT/FAT32 where MoveFileEx
-# returns EINVAL: Invalid argument. There is no bun flag to disable the
-# package store cache; --no-cache only skips the manifest cache. npm's flat
-# node_modules writes work fine on any filesystem. Zero host state.
 Write-Host ""
-Write-Host "[INFO] Running '$runner install' in app\webui..." -ForegroundColor Cyan
-Write-Host "       (this may take several minutes for first run)"
+Write-Host "[INFO] Running 'npm install' in app\webui..." -ForegroundColor Cyan
+Write-Host "       (first run may take several minutes for ~250MB node_modules)"
 Push-Location $WebuiDir
-$installOk = $false
 try {
-    & $runner install
-    if ($LASTEXITCODE -eq 0) {
-        $installOk = $true
-    } else {
-        Write-Host "[WARN] $runner install failed (exit $LASTEXITCODE)" -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "[WARN] $runner install exception: $_" -ForegroundColor Yellow
-}
-
-# -- npm fallback (only if bun was attempted and failed) -------------------
-if (-not $installOk -and $runnerLabel -like "*bun*") {
-    $npmCmd = Get-Command "npm" -ErrorAction SilentlyContinue
-    if ($npmCmd) {
-        Write-Host ""
-        Write-Host "[INFO] Falling back to npm (bun's package-store cache writes fail on exFAT/FAT32)..." -ForegroundColor Cyan
-        $runner = $npmCmd.Source
-        $runnerLabel = "npm (fallback after bun)"
-        try {
-            & $runner install
-            if ($LASTEXITCODE -eq 0) {
-                $installOk = $true
-            } else {
-                Pop-Location
-                Write-Host "[ERROR] npm install failed (exit $LASTEXITCODE)" -ForegroundColor Red
-                exit 1
-            }
-        } catch {
-            Pop-Location
-            Write-Host "[ERROR] npm install exception: $_" -ForegroundColor Red
-            exit 1
-        }
-    } else {
+    & $npm.Source install
+    if ($LASTEXITCODE -ne 0) {
         Pop-Location
-        Write-Host "[ERROR] npm not available for fallback. Re-run setup.bat to install Node.js." -ForegroundColor Red
+        Write-Host "[ERROR] npm install failed (exit $LASTEXITCODE)" -ForegroundColor Red
         exit 1
     }
-} elseif (-not $installOk) {
+} catch {
     Pop-Location
+    Write-Host "[ERROR] npm install exception: $_" -ForegroundColor Red
     exit 1
 }
 
 # -- Run build --------------------------------------------------------------
 Write-Host ""
-Write-Host "[INFO] Running '$runner run build' in app\webui..." -ForegroundColor Cyan
+Write-Host "[INFO] Running 'npm run build' in app\webui..." -ForegroundColor Cyan
 try {
-    & $runner run build
+    & $npm.Source run build
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] $runner run build failed (exit $LASTEXITCODE)" -ForegroundColor Red
         Pop-Location
+        Write-Host "[ERROR] npm run build failed (exit $LASTEXITCODE)" -ForegroundColor Red
         exit 1
     }
 } catch {
-    Write-Host "[ERROR] $runner run build exception: $_" -ForegroundColor Red
     Pop-Location
+    Write-Host "[ERROR] npm run build exception: $_" -ForegroundColor Red
     exit 1
 }
 Pop-Location
