@@ -63,6 +63,20 @@ Setup log: `setup_log.txt`. Runtime logs land in `data\logs\nanobot_YYYY-MM-DD.l
 - **`tools.exec.pathAppend` in `data/config.json` is auto-set** by `post_config.py` to `bin`, `bin/git/cmd`, `bin/nodejs`, and `scripts`. Don't hand-edit it after `setup.bat` — re-run `post_config.py` instead.
 - **Default ports**: HTTP 8900, WS 8765 (read from `config.json` in `nanobot-gateway.ps1`; falls back to those values). `start-gateway.bat` will prompt to kill whatever is bound to the WS port.
 
+## Optional: WebUI drop zone
+
+Lite skips the upstream webui build (`install_deps.ps1:28` sets `NANOBOT_SKIP_WEBUI_BUILD=1`) to stay small. If you build the webui yourself from `app\webui\` (with `npm install && npm run build`), the gateway will not see it unless the `dist/` lands at the installed package location `bin\Lib\site-packages\nanobot\web\dist\`.
+
+To make that copy durable and re-runnable:
+
+1. Build: `cd app\webui && npm install && npm run build` → outputs to `app\nanobot\web\dist\`.
+2. Copy the `dist/` contents into `data\webui\` (any layout you like — the helper copies everything verbatim into `nanobot\web\dist\`).
+3. Run `sync-webui.bat` to push `data\webui\*` into the installed package.
+
+The helper (`scripts/sync_webui.ps1`) is idempotent: it skips the copy if the installed `dist\index.html` is newer than the drop zone. Re-run after every `setup.bat` (Lite's `pip install --no-deps` will not preserve the webui) or after editing `data\webui\`.
+
+Detect: `bin\Lib\site-packages\nanobot\web\dist\index.html` must exist after sync. Upstream checks `is_dir()` on that path via `_default_webui_dist()` in `nanobot/channels/manager.py`.
+
 ## Branches
 
 - `lite` — this branch, the "built-in PS 5.1 only" edition (active development here).
