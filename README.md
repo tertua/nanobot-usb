@@ -1,5 +1,7 @@
 ﻿# Nanobot Portable Lite
 
+> https://github.com/tertua/nanobot-usb
+
 Portable nanobot-ai runtime for Windows. No system installation required.
 
 **Lite** = uses built-in Windows PowerShell 5.1+. No PowerShell 7 needed.
@@ -21,6 +23,9 @@ nanobot-usb/
 |-- edit_env.bat            # .env editor launcher
 |-- start-chat.bat          # Batch launcher for chat
 |-- start-gateway.bat       # Batch launcher for gateway
+|-- check_update.bat        # Check for newer Lite release
+|-- webui-build.bat         # Build upstream webui + sync (npm)
+|-- webui-sync.bat          # Push data\webui\ drop zone to site-packages
 |-- scripts/
 |   |-- init_portable.ps1
 |   |-- env_crypt.py
@@ -29,6 +34,8 @@ nanobot-usb/
 |   |-- post_config.py
 |   |-- resolve_workspace.py
 |   |-- write_lockhead.py
+|   |-- install_webui.ps1
+|   |-- sync_webui.ps1
 |   |-- unzip.vbs
 |   |-- requirements-lite.txt
 |   |-- setup/

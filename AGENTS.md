@@ -50,7 +50,7 @@ Setup log: `setup_log.txt`. Runtime logs land in `data\logs\nanobot_YYYY-MM-DD.l
 
 ## Editing rules that will surprise you
 
-- **Whitelist `.gitignore`.** The root `.gitignore` starts with `/*` and only re-allows specific paths. Any new top-level file or directory must be added to `.gitignore` with a `!/path` rule, otherwise it will silently not be tracked. Confirmed tracked set: `setup.bat`, `start-*.bat`, `edit_env.bat`, the three `nanobot-*.ps1` files, `scripts/` tree (recursive), `README.md`, `SECURITY.md`, `LICENSE`, `.github/`, `.gitattributes`, and `data/.env.example` only.
+- **Whitelist `.gitignore`.** The root `.gitignore` starts with `/*` and only re-allows specific paths. Any new top-level file or directory must be added to `.gitignore` with a `!/path` rule, otherwise it will silently not be tracked. Confirmed tracked set: `setup.bat`, `start-chat.bat`, `start-gateway.bat`, `edit_env.bat`, `check_update.bat`, `webui-build.bat`, `webui-sync.bat`, the three `nanobot-*.ps1` files, `scripts/` tree (recursive), `README.md`, `SECURITY.md`, `AGENTS.md`, `LICENSE`, `.github/`, `.gitattributes`, `.gitignore`.
 - **Line endings are enforced.** `.gitattributes` pins `*.ps1`/`*.bat`/`*.vbs`/etc. to CRLF and `*.py`/`*.md`/`*.json`/etc. to LF. Don't re-save `.ps1` files as LF — PowerShell 5.1 chokes on them.
 - **Hard-coded upstream versions live in `nanobot-setup.ps1`** (`$PyVer`, `$GitVer`, `$NodeVer`, `$ArchPython`, `$ArchNode`, `$ArchMinGit`, `$MinGwDir`). Bump them there; nothing reads a manifest.
 - **`check_update.bat` is standalone.** It calls the GitHub API for `tertua/nanobot-usb` `lite` and compares against `data\.wrapper_sha` (gitignored). First run records a baseline; subsequent runs notify (one yellow line) or say OK. It does **not** auto-update nanobot itself — re-running `setup.bat` from a fresh release is the update path. Delete `data\.wrapper_sha` to reset the baseline.
@@ -59,11 +59,11 @@ Setup log: `setup_log.txt`. Runtime logs land in `data\logs\nanobot_YYYY-MM-DD.l
 - **`data\.env_key` is an optional stored passphrase** so the launcher can run non-interactively. Delete it to force an interactive passphrase prompt every run (per `SECURITY.md` recommendation).
 - **`data\.env_key` is a convenience, not a security feature.** It stores the passphrase on disk so the launcher runs non-interactive. The LLM in your active nanobot already has the API key via process env vars regardless (`nanobot-agent.ps1` decrypts then sets env at startup). Encryption's purpose is to keep plaintext out of the LLM's *context window* (no file read, no tool output echo, no conversation log leak) — preserved either way.
 - **Real risk of `.env_key`**: physical theft of the USB becomes instant-decrypt instead of needing scrypt brute-force. Acceptable for scheduled tasks, screen-share, or demos where the USB is always with you. For unattended USBs, prefer interactive passphrase entry (`delete data\.env_key`).
-- **By default, Lite sets `tools.exec.restrictToWorkspace=true`** (see `post_config.py:121`), so the LLM cannot read `data\.env_key` even with file-read tools enabled — it lives outside `data\workspace\`.
+- **By default, Lite sets `tools.exec.restrictToWorkspace=true`** (see `post_config.py:139`; `tools.restrictToWorkspace` at `:143`), so the LLM cannot read `data\.env_key` even with file-read tools enabled — it lives outside `data\workspace\`.
 - **`data\.lockhead` is the setup-done sentinel.** `nanobot-setup.ps1` short-circuits if it exists. It is an INI file with `[system]` and `[software]` sections written by `write_lockhead.py` (hostname, OS build, device, drive, terminal, date, plus detected versions).
 - **`NANOBOT_HOME` env var** is the portable override that `nanobot.config.loader` consults before falling back to `~/.nanobot/config.json`. It is set in `scripts/init_portable.ps1` to `data/` — any new launcher that dot-sources that file inherits the redirect.
 - **Nanobot is invoked as a Python module**, not via a CLI binary: `& $PY -m nanobot agent` / `& $PY -m nanobot gateway`. The `agent` and `gateway` subcommands are what the patcher expects to find in `cli/commands.py`.
-- **`tools.exec.pathAppend` in `data/config.json` is auto-set** by `post_config.py` to `bin`, `bin/git/cmd`, `bin/nodejs`, and `scripts`. Don't hand-edit it after `setup.bat` — re-run `post_config.py` instead.
+- **`tools.exec.pathAppend` in `data/config.json` is auto-set** by `post_config.py` to `bin`, `scripts`, `bin/git/cmd`, `bin/nodejs` (insertion order). Don't hand-edit it after `setup.bat` — re-run `post_config.py` instead.
 - **Default ports**: HTTP 8900, WS 8765 (read from `config.json` in `nanobot-gateway.ps1`; falls back to those values). `start-gateway.bat` will prompt to kill whatever is bound to the WS port.
 
 ## Optional: WebUI drop zone
@@ -87,7 +87,7 @@ Manual trigger via `webui-build.bat` — not part of `setup.bat`. Use this if yo
 The script (`scripts/install_webui.ps1`):
 
 1. Checks for `app\webui\package.json` (full source clone required; ZIP install does not include webui).
-2. Resolves `npm` from PATH (always present after `setup.bat`).
+2. Resolves `npm` from `bin/nodejs\npm.cmd` first (Lite's standard location after `setup.bat`), falls back to system PATH.
 3. Runs `npm install` then `npm run build` in `app\webui\`.
 4. Direct-copies the build output (`app\nanobot\web\dist\*`) into `bin\Lib\site-packages\nanobot\web\dist\`.
 
@@ -110,7 +110,6 @@ Lite always writes `agents.defaults.disabledSkills = ["summarize", "tmux"]` into
 
 ## Things that look like bugs but aren't
 
-- `nanobot-setup.ps1` lines 157–161: "Cleanup skipped — app/ and tmp/ preserved for inspection." Intentionally not removing `app/` or `tmp/` after install. Don't re-enable the `Remove-Item` block unless you intend to wipe the cloned source and download cache.
+- `nanobot-setup.ps1` lines 157–161: "Cleanup skipped — app/ preserved for inspection; tmp/ cleaned (download/extract cache, not needed after install)." `app/` is the cloned/extracted nanobot source and stays on disk for debugging. Don't re-enable the `$APP_DIR` `Remove-Item` line unless you want a wiped source tree; the `$TMP_DIR` remove is intentional.
 - `nanobot-gateway.ps1` has a hard-coded 10-second countdown before launching. Bypass by invoking `nanobot-gateway.ps1` directly only if you really mean it; the `.bat` launcher doesn't skip it.
 - The PS5.1+ banner in `setup.bat` line 91 and several other strings are mixed Indonesian/English. Don't "fix" the Indonesian strings.
-- `healthcheck.py` prints `start_chat.bat / start_gate.bat` on failure — those are typo'd (real names are `start-chat.bat` / `start-gateway.bat`). The typos are in the printed hint only and harmless, but be aware if you grep for the correct names.

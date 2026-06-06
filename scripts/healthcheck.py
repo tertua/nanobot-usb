@@ -136,7 +136,6 @@ def main():
     if all_ok:
         print("  All checks passed! System ready to use.")
     else:
-        fix_cmd = "start-chat.bat / start-gate.bat"
         if not results[2]:  # nanobot module missing
             print("  Warning: run nanobot-setup.ps1 to install.")
         elif not results[0]:  # python version
