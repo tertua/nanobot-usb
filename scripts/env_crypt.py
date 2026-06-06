@@ -72,7 +72,11 @@ def _maybe_save_key(passphrase: str) -> None:
     if os.path.exists(KEY_PATH):
         prompt_text = "data/.env_key already exists. Overwrite?"
     else:
-        prompt_text = "Save passphrase to data/.env_key for non-interactive launch?"
+        print("  [INFO] Storing .env_key makes the launcher non-interactive.")
+        print("         OK if: USB always with you (scheduled tasks, demos, screen-share).")
+        print("         Risk: physical theft of USB = instant-decrypt of .env.encrypted")
+        print("         (scrypt brute-force protection is bypassed when .env_key exists).")
+        prompt_text = "Save passphrase to data/.env_key?"
     if not _prompt_yes_no(prompt_text, default_yes=False):
         print("  [SKIP] .env_key not modified.")
         _log.info("save-key: declined")
