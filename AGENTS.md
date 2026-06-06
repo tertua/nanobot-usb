@@ -88,11 +88,11 @@ The script:
 
 1. Checks for `app\webui\package.json` (full source clone required; ZIP install does not include webui).
 2. Detects runner: portable bun in `bin\bun\` → system `bun` → auto-download bun → `npm` fallback.
-3. Auto-installs portable bun to `bin\bun\` (~50 MB) if no bun found. Default version: 1.3.14 (edit `scripts\install_bun.ps1:26` to change). Lite always downloads the `-baseline` variant — runs on any x64 CPU since ~2008, no AVX2 required. The optimized `bun-windows-x64.zip` panics on hosts lacking AVX2. Lite also passes `--no-cache` to `bun install` because bun's HOME-relative cache uses `MoveFileEx` which returns `EINVAL` on exFAT/FAT32 (Lite redirects HOME to the USB). Cache provides no value on a portable one-shot install anyway.
-4. Runs `<runner> install` and `<runner> run build` in `app\webui\`.
+3. Auto-installs portable bun to `bin\bun\` (~50 MB) if no bun found. Default version: 1.3.14 (edit `scripts\install_bun.ps1:26` to change). Lite always downloads the `-baseline` variant — runs on any x64 CPU since ~2008, no AVX2 required. The optimized `bun-windows-x64.zip` panics on hosts lacking AVX2.
+4. Runs `<runner> install` and `<runner> run build` in `app\webui\`. If the bun install fails, auto-retries with `npm install` (Lite redirects `HOME` to the USB; bun's package store at `~/.bun/install/cache/` lives on exFAT/FAT32 where `MoveFileEx` returns `EINVAL` — there is no bun flag to disable the package-store cache, only `--no-cache` which skips the manifest cache). On NTFS hosts, bun wins (faster). On exFAT/FAT32, npm wins. Zero host state either way.
 5. Calls `scripts/sync_webui.ps1` to push the build to the installed package.
 
-If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `build-webui.bat` after fixing the issue. Delete `bin\bun\` to force npm fallback on the next build.
+If the build fails after npm fallback, the script exits 1 with a clear error. Setup was already completed; you can re-run `build-webui.bat` after fixing the issue.
 
 ## Branches
 

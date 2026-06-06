@@ -93,24 +93,56 @@ Write-Host "[OK] Runner: $runnerLabel" -ForegroundColor Green
 Write-Host "     Path:  $runner"
 
 # -- Run install ------------------------------------------------------------
-# --no-cache: bun's default cache uses MoveFileEx into a HOME-relative dir
-# (Lite redirects HOME to the USB). On exFAT/FAT32 the syscall returns
-# EINVAL: Invalid argument, so every package errors with "moving X to
-# cache dir failed" and node_modules ends up incomplete. Lite is one-shot
-# and portable, so the cache provides no value here.
+# Try $runner first (bun preferred for speed). If bun fails, retry with npm.
+# Lite redirects HOME/USERPROFILE to the USB via init_portable.ps1, so bun's
+# package store (~/.bun/install/cache) lands on exFAT/FAT32 where MoveFileEx
+# returns EINVAL: Invalid argument. There is no bun flag to disable the
+# package store cache; --no-cache only skips the manifest cache. npm's flat
+# node_modules writes work fine on any filesystem. Zero host state.
 Write-Host ""
-Write-Host "[INFO] Running '$runner install --no-cache' in app\webui..." -ForegroundColor Cyan
+Write-Host "[INFO] Running '$runner install' in app\webui..." -ForegroundColor Cyan
 Write-Host "       (this may take several minutes for first run)"
 Push-Location $WebuiDir
+$installOk = $false
 try {
-    & $runner install --no-cache
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] $runner install failed (exit $LASTEXITCODE)" -ForegroundColor Red
-        Pop-Location
-        exit 1
+    & $runner install
+    if ($LASTEXITCODE -eq 0) {
+        $installOk = $true
+    } else {
+        Write-Host "[WARN] $runner install failed (exit $LASTEXITCODE)" -ForegroundColor Yellow
     }
 } catch {
-    Write-Host "[ERROR] $runner install exception: $_" -ForegroundColor Red
+    Write-Host "[WARN] $runner install exception: $_" -ForegroundColor Yellow
+}
+
+# -- npm fallback (only if bun was attempted and failed) -------------------
+if (-not $installOk -and $runnerLabel -like "*bun*") {
+    $npmCmd = Get-Command "npm" -ErrorAction SilentlyContinue
+    if ($npmCmd) {
+        Write-Host ""
+        Write-Host "[INFO] Falling back to npm (bun's package-store cache writes fail on exFAT/FAT32)..." -ForegroundColor Cyan
+        $runner = $npmCmd.Source
+        $runnerLabel = "npm (fallback after bun)"
+        try {
+            & $runner install
+            if ($LASTEXITCODE -eq 0) {
+                $installOk = $true
+            } else {
+                Pop-Location
+                Write-Host "[ERROR] npm install failed (exit $LASTEXITCODE)" -ForegroundColor Red
+                exit 1
+            }
+        } catch {
+            Pop-Location
+            Write-Host "[ERROR] npm install exception: $_" -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Pop-Location
+        Write-Host "[ERROR] npm not available for fallback. Re-run setup.bat to install Node.js." -ForegroundColor Red
+        exit 1
+    }
+} elseif (-not $installOk) {
     Pop-Location
     exit 1
 }
