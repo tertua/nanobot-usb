@@ -17,6 +17,9 @@
 !/scripts/
 !/scripts/**
 
+# Update check
+!/check_update.bat
+
 # Python cache files
 __pycache__/
 *.py[cod]
@@ -31,6 +34,7 @@ __pycache__/
 !/CHANGELOG.md
 !/README.md
 !/SECURITY.md
+!/AGENTS.md
 
 # GitHub config
 !/.github/
