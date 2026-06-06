@@ -126,26 +126,32 @@ if (-not (Test-Path $IndexOut)) {
 
 Write-Host "[OK] Build output: $BuildOut" -ForegroundColor Green
 
-# -- Sync to installed package ----------------------------------------------
-Write-Host ""
-Write-Host "[INFO] Syncing to installed package..." -ForegroundColor Cyan
-$syncScript = Join-Path $ScriptDir "sync_webui.ps1"
-if (-not (Test-Path $syncScript)) {
-    Write-Host "[ERROR] sync_webui.ps1 not found at $syncScript" -ForegroundColor Red
+# -- Copy build to installed package ----------------------------------------
+# Direct copy: build output (app\nanobot\web\dist) -> site-packages.
+# Do NOT call sync_webui.ps1 here — that script reads from data\webui\
+# (manual drop-zone workflow) and would either fail or copy stale files.
+$SitePkgs = Join-Path $ROOT "bin\Lib\site-packages"
+$SiteDist = Join-Path $SitePkgs "nanobot\web\dist"
+if (-not (Test-Path $SitePkgs)) {
+    Write-Host "[ERROR] site-packages not found: $SitePkgs" -ForegroundColor Red
+    Write-Host "         Re-run setup.bat to install Python + nanobot." -ForegroundColor Red
     exit 1
 }
+if (-not (Test-Path $SiteDist)) {
+    New-Item -ItemType Directory -Path $SiteDist -Force | Out-Null
+}
 try {
-    & $syncScript
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "[ERROR] sync_webui.ps1 failed (exit $LASTEXITCODE)" -ForegroundColor Red
-        Write-Host "         webui built but not synced. Run sync-webui.bat manually." -ForegroundColor Red
-        exit 1
-    }
+    Copy-Item -Path (Join-Path $BuildOut "*") -Destination $SiteDist -Recurse -Force
 } catch {
-    Write-Host "[ERROR] sync_webui.ps1 exception: $_" -ForegroundColor Red
+    Write-Host "[ERROR] Copy to site-packages failed: $_" -ForegroundColor Red
     exit 1
 }
 
+$fileCount = (Get-ChildItem -Path $SiteDist -Recurse -File).Count
+
 Write-Host ""
 Write-Host "[OK] Webui build + sync complete." -ForegroundColor Green
+Write-Host "     Build:   $BuildOut" -ForegroundColor Cyan
+Write-Host "     Installed: $SiteDist" -ForegroundColor Cyan
+Write-Host "     Files:   $fileCount" -ForegroundColor Cyan
 Write-Host "     Next: run start-gateway.bat" -ForegroundColor Cyan
