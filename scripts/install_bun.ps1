@@ -46,10 +46,12 @@ if (-not (Test-Path $TmpDir)) { New-Item -ItemType Directory -Path $TmpDir -Forc
 if (-not (Test-Path $BunDir)) { New-Item -ItemType Directory -Path $BunDir -Force | Out-Null }
 
 # -- Download ---------------------------------------------------------------
-$ZipUrl  = "https://github.com/oven-sh/bun/releases/download/bun-v$BunVer/bun-windows-$Arch.zip"
-$ZipPath = Join-Path $TmpDir "bun-windows-$Arch.zip"
+# Always pull the `-baseline` variant: portable across any x64 CPU since ~2008,
+# no AVX2 required. The optimized `bun-windows-x64.zip` panics on older hosts.
+$ZipUrl  = "https://github.com/oven-sh/bun/releases/download/bun-v$BunVer/bun-windows-$Arch-baseline.zip"
+$ZipPath = Join-Path $TmpDir "bun-windows-$Arch-baseline.zip"
 
-Write-Host "[INFO] Downloading bun v$BunVer ($Arch)..." -ForegroundColor Cyan
+Write-Host "[INFO] Downloading bun v$BunVer ($Arch, baseline)..." -ForegroundColor Cyan
 Write-Host "       From: $ZipUrl"
 Write-Host "       To:   $ZipPath"
 

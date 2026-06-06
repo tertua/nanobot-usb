@@ -21,13 +21,16 @@ echo  Requires internet. Re-runnable for retries.
 echo.
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\install_webui.ps1"
+set "RC=%errorlevel%"
 
-if %errorlevel% neq 0 (
-    echo.
-    echo  [WARN] Webui build failed (exit %errorlevel%).
-    echo         setup.bat already completed - retry by running build-webui.bat again.
-    echo.
-    pause
-)
+if %RC% neq 0 goto :err
 
-exit /b %errorlevel%
+exit /b %RC%
+
+:err
+echo.
+echo  [WARN] Webui build failed, exit %RC%.
+echo         setup.bat already completed - retry by running build-webui.bat again.
+echo.
+pause
+exit /b %RC%
