@@ -9,6 +9,7 @@ Security: OWASP 2023 scrypt parameters (N=1<<20, r=8, p=1).
 
 Usage:
     python scripts/env_crypt.py encrypt                 # prompt passphrase + lock
+    python scripts/env_crypt.py encrypt --save-key      # after lock, offer to save passphrase
     python scripts/env_crypt.py load                    # prompt passphrase -> .env.tmp
     python scripts/env_crypt.py load --noninteractive   # use NANOBOT_ENV_KEY env var
     python scripts/env_crypt.py decrypt                 # prompt passphrase -> .env (edit)
@@ -33,6 +34,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_PATH = os.path.join(ROOT, "data", ".env")
 ENCRYPTED_PATH = ENV_PATH + ".encrypted"
 TMP_PATH = os.path.join(ROOT, "data", ".env.tmp")
+KEY_PATH = os.path.join(ROOT, "data", ".env_key")
 LOG_DIR = os.path.join(ROOT, "data", "logs")
 LOG_PATH = os.path.join(LOG_DIR, "encrypt.log")
 
@@ -53,6 +55,36 @@ def _get_passphrase(prompt: str = "Passphrase") -> str:
             sys.exit(1)
         return pwd
     return getpass(f"  [{prompt}] ")
+
+def _prompt_yes_no(prompt: str, default_yes: bool = False) -> bool:
+    """Prompt user for yes/no. Returns True only on explicit y/yes."""
+    suffix = "[Y/n]" if default_yes else "[y/N]"
+    try:
+        resp = input(f"  {prompt} {suffix} ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return False
+    if not resp:
+        return default_yes
+    return resp in ("y", "yes")
+
+def _maybe_save_key(passphrase: str) -> None:
+    """Offer to persist passphrase to data/.env_key for non-interactive launches."""
+    if os.path.exists(KEY_PATH):
+        prompt_text = "data/.env_key already exists. Overwrite?"
+    else:
+        prompt_text = "Save passphrase to data/.env_key for non-interactive launch?"
+    if not _prompt_yes_no(prompt_text, default_yes=False):
+        print("  [SKIP] .env_key not modified.")
+        _log.info("save-key: declined")
+        return
+    os.makedirs(os.path.dirname(KEY_PATH), exist_ok=True)
+    tmp = KEY_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(passphrase + "\n")
+    os.replace(tmp, KEY_PATH)
+    _log.info("save-key: success -> %s", os.path.relpath(KEY_PATH, ROOT))
+    print("  [DONE] Passphrase saved to data/.env_key")
+    print("  [INFO] Delete this file to force interactive passphrase prompts.")
 
 def _derive_key(passphrase: str, salt: bytes) -> bytes:
     kdf = Scrypt(salt=salt, length=_KEY_LEN, n=_SCRYPT_N, r=_SCRYPT_R, p=_SCRYPT_P)
@@ -108,6 +140,8 @@ def cmd_encrypt() -> None:
     _log.info("encrypt: success -> %s", os.path.relpath(ENCRYPTED_PATH, ROOT))
     print("  [DONE] Encrypted .env secrets -> data/.env.encrypted")
     print("  [INFO] The original .env file has been deleted.")
+    if "--save-key" in sys.argv and sys.stdin.isatty():
+        _maybe_save_key(passphrase)
 
 def cmd_load() -> None:
     _init_log()

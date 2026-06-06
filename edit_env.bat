@@ -49,7 +49,17 @@ if errorlevel 1 (
 )
 
 :edit
-echo  [2/3] Open Notepad...
+echo  [2/3] Active provider context:
+set "HAVE_PROVIDER="
+for /f "usebackq tokens=*" %%L in (`powershell -NoProfile -Command "$ErrorActionPreference='SilentlyContinue'; $c = Get-Content 'data\config.json' -Raw | ConvertFrom-Json; $p = $c.agents.defaults.provider; if ($p) { Write-Output ('Provider: ' + $p); $pf = $c.providers.$p; if ($pf) { $pf.PSObject.Properties | ForEach-Object { if ($_.Value -match '\$\{([^}]+)\}') { Write-Output ('  uses: ' + $Matches[1]) } } } }"`) do (
+    echo         %%L
+    set "HAVE_PROVIDER=1"
+)
+if not defined HAVE_PROVIDER (
+    echo         ^^(no provider info; showing all .env keys^^^)
+)
+echo.
+echo  Opening Notepad for editing...
 start /wait notepad "data\.env"
 
 echo  [3/3] Re-encryption...
@@ -58,7 +68,7 @@ if exist "data\.env_key" (
     set "NANOBOT_ENV_KEY=!ENV_KEY!"
     "%PY%" "%ROOT%scripts\env_crypt.py" encrypt --noninteractive
 ) else (
-    "%PY%" "%ROOT%scripts\env_crypt.py" encrypt
+    "%PY%" "%ROOT%scripts\env_crypt.py" encrypt --save-key
 )
 if errorlevel 1 (
     echo  [ERROR] Failed.

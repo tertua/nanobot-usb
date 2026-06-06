@@ -66,22 +66,15 @@ Write-OK "config.json ready."
 Write-OK "lockhead installed."
 
 $EnvFile = Join-Path $DATA_DIR ".env"
-if (-not (Test-Path $EnvFile)) {
-    Write-Info "Create .env template..."
-    Set-Content -Path $EnvFile -Value @(
-        "# Nanobot Portable - Environment Variables"
-        "# Fill in API key before running the bot"
-        "# Protection .env by running edit_env.bat"
-        "# ========================================="
-        ""
-        "NANOBOT_CUSTOM_API_KEY=sk-your-api-key-here"
-        "NANOBOT_CUSTOM_API_BASE=https://your-api-endpoint/v1"
-        ""
-        "NVIDIA_API_KEY=null"
-    ) -Encoding Ascii
-    Write-OK ".env created."
-    Write-Warn "!!! Edit first: data\.env - fill in API key !!!"
+$EnvEnc  = Join-Path $DATA_DIR ".env.encrypted"
+if (Test-Path $EnvEnc) {
+    Write-OK ".env.encrypted exists; .env not needed."
+} elseif (Test-Path $EnvFile) {
+    Write-OK ".env ready (synced by post_config.py from config.json)."
 } else {
-    Write-OK ".env already exists."
+    Write-Warn ".env missing after post_config. Creating minimal placeholder."
+    Set-Content -Path $EnvFile -Value @(
+        "# .env placeholder. Run setup.bat again to sync from config.json."
+    ) -Encoding Ascii
 }
 Write-OK ""
