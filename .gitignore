@@ -1,0 +1,37 @@
+# ============================================
+#  .gitignore - NANOBOT PORTABLE
+#  whitelist mode by simata.id
+# ============================================
+/*
+!/.gitignore
+!/.gitattributes
+!/LICENSE
+
+!/data/.env.example
+
+# All Portable Builder
+!/setup.bat
+!/nanobot-setup.ps1
+!/nanobot-agent.ps1
+!/nanobot-gateway.ps1
+!/scripts/
+!/scripts/**
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# All Launcher Batch
+!/start-chat.bat
+!/start-gateway.bat
+!/edit_env.bat
+
+# All Markdown
+!/CHANGELOG.md
+!/README.md
+!/SECURITY.md
+
+# GitHub config
+!/.github/
+!/.github/FUNDING.yml
