@@ -95,6 +95,14 @@ The script (`scripts/install_webui.ps1`):
 
 If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `webui-build.bat` after fixing the issue.
 
+## Skills auto-disabled by Lite
+
+Lite always writes `agents.defaults.disabledSkills = ["summarize", "tmux"]` into `data/config.json` via `post_config.py:_LITE_DISABLED_SKILLS`. Reason: these two upstream skills depend on tooling that does not exist on a bare Windows host (`tmux` binary; yt-dlp / shell-pipeline summaries via PS5.1). The `requires.bins` check in `SkillsLoader._check_requirements` would already mark them `(unavailable)`, but they would still appear in the skills summary and waste context tokens. Disabling is cleaner.
+
+- Schema: `nanobot/config/schema.py:AgentDefaults.disabled_skills` (upstream first-class field, plumbed to `SkillsLoader.list_skills`).
+- User override preserved: if `data/config.json` already has `disabledSkills`, the list is merged (de-duped, user order first). Idempotent — re-running `setup.bat` produces no diff.
+- To re-enable for testing: edit `data/config.json` directly, remove the entries. Note that `setup.bat` re-runs `post_config.py`, so re-add by hand if you re-onboard.
+
 ## Branches
 
 - `lite` — this branch, the "built-in PS 5.1 only" edition (active development here).
