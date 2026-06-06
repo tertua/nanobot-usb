@@ -93,12 +93,17 @@ Write-Host "[OK] Runner: $runnerLabel" -ForegroundColor Green
 Write-Host "     Path:  $runner"
 
 # -- Run install ------------------------------------------------------------
+# --no-cache: bun's default cache uses MoveFileEx into a HOME-relative dir
+# (Lite redirects HOME to the USB). On exFAT/FAT32 the syscall returns
+# EINVAL: Invalid argument, so every package errors with "moving X to
+# cache dir failed" and node_modules ends up incomplete. Lite is one-shot
+# and portable, so the cache provides no value here.
 Write-Host ""
-Write-Host "[INFO] Running '$runner install' in app\webui..." -ForegroundColor Cyan
+Write-Host "[INFO] Running '$runner install --no-cache' in app\webui..." -ForegroundColor Cyan
 Write-Host "       (this may take several minutes for first run)"
 Push-Location $WebuiDir
 try {
-    & $runner install
+    & $runner install --no-cache
     if ($LASTEXITCODE -ne 0) {
         Write-Host "[ERROR] $runner install failed (exit $LASTEXITCODE)" -ForegroundColor Red
         Pop-Location
