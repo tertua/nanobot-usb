@@ -74,7 +74,7 @@ To make that copy durable and re-runnable:
 
 1. Build: `cd app\webui && npm install && npm run build` → outputs to `app\nanobot\web\dist\`.
 2. Copy the `dist/` contents into `data\webui\` (any layout you like — the helper copies everything verbatim into `nanobot\web\dist\`).
-3. Run `sync-webui.bat` to push `data\webui\*` into the installed package.
+3. Run `webui-sync.bat` to push `data\webui\*` into the installed package.
 
 The helper (`scripts/sync_webui.ps1`) is idempotent: it skips the copy if the installed `dist\index.html` is newer than the drop zone. Re-run after every `setup.bat` (Lite's `pip install --no-deps` will not preserve the webui) or after editing `data\webui\`.
 
@@ -82,18 +82,18 @@ Detect: `bin\Lib\site-packages\nanobot\web\dist\index.html` must exist after syn
 
 ## Optional: WebUI auto-build
 
-Manual trigger via `build-webui.bat` — not part of `setup.bat`. Use this if you want a one-shot build with auto-sync.
+Manual trigger via `webui-build.bat` — not part of `setup.bat`. Use this if you want a one-shot build with auto-sync.
 
 The script (`scripts/install_webui.ps1`):
 
 1. Checks for `app\webui\package.json` (full source clone required; ZIP install does not include webui).
 2. Resolves `npm` from PATH (always present after `setup.bat`).
 3. Runs `npm install` then `npm run build` in `app\webui\`.
-4. Calls `scripts/sync_webui.ps1` to push the build to the installed package.
+4. Direct-copies the build output (`app\nanobot\web\dist\*`) into `bin\Lib\site-packages\nanobot\web\dist\`.
 
 **Why npm only, not bun**: bun is not used here. Lite redirects `HOME`/`USERPROFILE` to the USB via `init_portable.ps1`, which makes bun's HOME-relative package store (`~/.bun/install/cache/`) land on the USB filesystem. On exFAT/FAT32 the `MoveFileEx` writes fail with `EINVAL: Invalid argument`, and bun exits 0 leaving `node_modules` incomplete. There is no bun flag/env that disables the package-store cache — only `--no-cache`, which skips the manifest cache (binary `*.npm` registry metadata) and does not affect the package store. npm's flat `node_modules/` writes work on any filesystem, so npm is the only path that is truly portable.
 
-If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `build-webui.bat` after fixing the issue.
+If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `webui-build.bat` after fixing the issue.
 
 ## Branches
 

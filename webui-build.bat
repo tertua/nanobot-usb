@@ -30,7 +30,7 @@ exit /b %RC%
 :err
 echo.
 echo  [WARN] Webui build failed, exit %RC%.
-echo         setup.bat already completed - retry by running build-webui.bat again.
+echo         setup.bat already completed - retry by running webui-build.bat again.
 echo.
 pause
 exit /b %RC%
