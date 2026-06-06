@@ -24,7 +24,7 @@ if (Test-Path $ReqFile) {
 }
 Write-OK ""
 
-Write-Info "Built nanobot core..."
+Write-Info "Build nanobot core..."
 $env:NANOBOT_SKIP_WEBUI_BUILD = "1"
 $PyProject = Join-Path $APP_DIR "pyproject.toml"
 if (Test-Path $PyProject) {
@@ -71,9 +71,13 @@ if (-not (Test-Path $EnvFile)) {
     Set-Content -Path $EnvFile -Value @(
         "# Nanobot Portable - Environment Variables"
         "# Fill in API key before running the bot"
+        "# Protection .env by running edit_env.bat"
+        "# ========================================="
         ""
         "NANOBOT_CUSTOM_API_KEY=sk-your-api-key-here"
         "NANOBOT_CUSTOM_API_BASE=https://your-api-endpoint/v1"
+        ""
+        "NVIDIA_API_KEY=null"
     ) -Encoding Ascii
     Write-OK ".env created."
     Write-Warn "!!! Edit first: data\.env - fill in API key !!!"

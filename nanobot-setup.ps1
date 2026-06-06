@@ -53,9 +53,9 @@ $PyVer      = "3.12.0"
 $GitVer     = "2.54.0"
 $NodeVer    = "24.16.0"
 
-Write-Host "  $('=' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "       NANOBOT Portable Setup - Simata.id" -ForegroundColor Cyan
-Write-Host "  $('=' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "  Folder: $ROOT"
 Write-Host ""
 
@@ -136,9 +136,9 @@ try {
     . (Join-Path $SCRIPTS_DIR "setup\install_deps.ps1")
 } catch {
     Write-Host ""
-Write-Host "  $('=' * 49)" -ForegroundColor Red
+Write-Host "  $('=' * 49)" -ForegroundColor Red
 Write-Host "       SETUP FAILED! - Simata.id" -ForegroundColor Red
-Write-Host "  $('=' * 49)" -ForegroundColor Red
+Write-Host "  $('=' * 49)" -ForegroundColor Red
     Write-Host ""
     Write-Host "  Error: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Stage: Check output above for failed step" -ForegroundColor Yellow

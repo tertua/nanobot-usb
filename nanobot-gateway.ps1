@@ -96,9 +96,9 @@ if ($portInUse) {
 
 # -- Banner ----------------------------------------------------------
 Write-Host "`n"
-Write-Host "  $('=' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "       NANOBOT GATEWAY - Simata.id" -ForegroundColor Cyan
-Write-Host "  $('=' * 49)" -ForegroundColor Cyan
+Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "`n"
 
 Write-Host "  Home  : $NANOBOT_HOME" -ForegroundColor Green
