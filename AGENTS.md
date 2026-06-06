@@ -78,6 +78,20 @@ The helper (`scripts/sync_webui.ps1`) is idempotent: it skips the copy if the in
 
 Detect: `bin\Lib\site-packages\nanobot\web\dist\index.html` must exist after sync. Upstream checks `is_dir()` on that path via `_default_webui_dist()` in `nanobot/channels/manager.py`.
 
+## Optional: WebUI auto-build
+
+Manual trigger via `build-webui.bat` — not part of `setup.bat`. Use this if you want a one-shot build with runner auto-detection and auto-sync.
+
+The script:
+
+1. Checks for `app\webui\package.json` (full source clone required; ZIP install does not include webui).
+2. Detects runner: portable bun in `bin\bun\` → system `bun` → auto-download bun → `npm` fallback.
+3. Auto-installs portable bun to `bin\bun\` (~50 MB) if no bun found. Default version: 1.3.14 (edit `scripts\install_bun.ps1:26` to change).
+4. Runs `<runner> install` and `<runner> run build` in `app\webui\`.
+5. Calls `scripts/sync_webui.ps1` to push the build to the installed package.
+
+If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `build-webui.bat` after fixing the issue. Delete `bin\bun\` to force npm fallback on the next build.
+
 ## Branches
 
 - `lite` — this branch, the "built-in PS 5.1 only" edition (active development here).

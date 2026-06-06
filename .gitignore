@@ -30,6 +30,7 @@ __pycache__/
 !/start-gateway.bat
 !/edit_env.bat
 !/sync-webui.bat
+!/build-webui.bat
 
 # All Markdown
 !/CHANGELOG.md
