@@ -91,12 +91,6 @@ if (Test-Path $EnvFileEnc) {
     }
 }
 
-# All Environment load from scripts\init_portable.ps1
-
-
-
-
-
 # -- Inject portable PATH --------------------------------------------
 $PortablePaths = @(
     Join-Path $ROOT "bin"
