@@ -31,10 +31,8 @@ if (Test-Path $PythonExe) {
     }
     Write-Info "Patching ._pth..."
     Get-ChildItem -Path $PY_DIR -Filter "*._pth" | ForEach-Object {
-        $baseName = $_.BaseName
-        Set-Content -Path $_.FullName -Value @(
-            "$baseName.zip", ".", "Lib", "Lib\site-packages", "..\app"
-        )
+        (Get-Content $_.FullName) -replace '^#import site$', 'import site' | Set-Content $_.FullName
+        Add-Content -Path $_.FullName -Value @("Lib", "Lib\site-packages", "..\app")
     }
     Write-Info "Python installed:"
     & $PythonExe --version
