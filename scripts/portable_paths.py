@@ -4,6 +4,7 @@ Target priority:
   1. app/nanobot/config/ (source before pip install — fresh setup flow)
   2. site-packages/nanobot/config/ (already installed — existing setup)
 """
+import re
 import sys
 from pathlib import Path
 
@@ -53,23 +54,89 @@ def simple_replace(content: str, old: str, new: str, label: str) -> tuple[str, i
     return content, 0
 
 
-def simple_replace_any(content: str, olds: list, new: str, label: str) -> tuple[str, int]:
-    """Try each old pattern in order; replace with new on first match.
+_STDERR_BLOCK = '''    logger.add(
+        sys.stderr,
+        format=(
+            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+            "<level>{level: <5}</level> | "
+            "<cyan>{extra[channel]}</cyan> | "
+            "<level>{message}</level>"
+        ),
+        level="DEBUG" if __COND__ else "INFO",
+        colorize=None,
+        filter=lambda record: record["extra"].setdefault("channel", "-") or True,
+    )'''
 
-    Use when the source file can be in one of several pre-patch states
-    (e.g. fresh upstream OR a previous patch version). All `olds` should
-    map to the same logical source state; only one will be present in
-    the file at a time.
+
+def _patch_log_handlers(content: str, cond_var: str, old_upstream: str, new_block: str, label: str) -> tuple[str, int]:
+    """Patch nanobot CLI log handlers via 3 small regex subs (+ upstream full-block fallback).
+
+    Regex subs (idempotent, no-op if pattern not matched):
+      A. `logger.remove(_log_handler_id)` → `logger.remove()`
+         Fixes the DEBUG leak: removes ALL handlers, not just the custom one.
+      B. File logger level INFO/WARNING → DEBUG
+      C. Conditional `if X: logger.add(sys.stderr, level="DEBUG", ...)` → unconditional ternary
+         Always shows INFO+ in terminal; --{cond_var} elevates to DEBUG.
+
+    For fresh upstream (no _log_dir at all), a full-block replace installs the new setup.
+    For other unrecognised states, post-condition check fails and a [WARN] is logged —
+    delete data\\.lockhead and re-run setup.bat to recover.
     """
-    for i, old in enumerate(olds):
-        if old in content:
-            content = content.replace(old, new)
-            print(f"  [OK] {label} (matched variant {i + 1}/{len(olds)})")
+    # Sentinel: already fully patched (logger.remove() in log section + terminal ternary + file DEBUG)
+    if "_log_dir.mkdir" in content:
+        log_section = content[content.index("_log_dir.mkdir"):]
+        if (
+            "logger.remove()" in log_section
+            and f'"DEBUG" if {cond_var} else "INFO"' in content
+            and re.search(r'level="DEBUG",\s+rotation="1 day"', content)
+        ):
+            return content, 0  # SKIP
+
+    # Upstream state: no _log_dir at all → full-block replace
+    if "_log_dir.mkdir" not in content:
+        if old_upstream and old_upstream in content:
+            content = content.replace(old_upstream, new_block)
+            print(f"  [OK] {label} (upstream full-block)")
             return content, 1
-    if new in content:
-        print(f"  [SKIP] {label}: already patched")
+        print(f"  [WARN] {label}: no _log_dir and no upstream pattern — version mismatch?")
         return content, 0
-    print(f"  [WARN] {label}: pattern not found — version mismatch?")
+
+    # Has _log_dir: apply 3 small regex subs
+    n_total = 0
+
+    # Sub A
+    content, n = re.subn(r'logger\.remove\(_log_handler_id\)', 'logger.remove()', content)
+    n_total += n
+
+    # Sub B
+    content, n = re.subn(
+        r'(logger\.add\(\s*_log_dir / "nanobot_\{time:YYYY-MM-DD\}\.log",.*?level=)"(?:INFO|WARNING)"',
+        r'\1"DEBUG"',
+        content,
+        flags=re.DOTALL,
+    )
+    n_total += n
+
+    # Sub C
+    cond_re = re.escape(cond_var)
+    content, n = re.subn(
+        r'    if ' + cond_re + r':\n        logger\.add\(\s*sys\.stderr,.*?level="DEBUG",\s*colorize=None,\s*filter=.*?,\s*\)\n',
+        _STDERR_BLOCK.replace('__COND__', cond_var),
+        content,
+        flags=re.DOTALL,
+    )
+    n_total += n
+
+    # Post-condition check
+    log_section = content[content.index("_log_dir.mkdir"):]
+    has_remove = "logger.remove()" in log_section
+    has_terminal = f'"DEBUG" if {cond_var} else "INFO"' in content
+    has_file_debug = re.search(r'level="DEBUG",\s+rotation="1 day"', content) is not None
+    if has_remove and has_terminal and has_file_debug:
+        print(f"  [OK] {label} ({n_total} regex sub(s))")
+        return content, 1
+
+    print(f"  [WARN] {label}: incomplete after subs — delete data\\.lockhead and re-run setup.bat")
     return content, 0
 
 # ── 1. paths.py ────────────────────────────────────────────────────
@@ -152,12 +219,7 @@ else:
     print(f"Commands file: {commands_target}")
 
 def patch_serve(content):
-    """4a. serve(): terminal=INFO (clean UX), file=DEBUG (full detail). --verbose elevates terminal to DEBUG.
-
-    Matches upstream original (variant 1), the previous lite-patch output (variant 2),
-    or the intermediate state where the new comment+level were applied but
-    logger.remove(_log_handler_id) was not yet replaced with logger.remove() (variant 3).
-    """
+    """4a. serve(): terminal=INFO (clean UX), file=DEBUG (full detail). --verbose elevates terminal to DEBUG."""
     old_upstream = (
         '    if verbose:\n'
         '        logger.enable("nanobot")\n'
@@ -165,60 +227,6 @@ def patch_serve(content):
         '        logger.disable("nanobot")\n'
         '\n'
         '    runtime_config = _load_runtime_config(config, workspace)'
-    )
-    old_previous = (
-        '    runtime_config = _load_runtime_config(config, workspace)\n'
-        '\n'
-        '    # Redirect loguru from stderr to file, terminal only if verbose.\n'
-        '    _log_dir = (runtime_config.workspace_path.parent / "logs").resolve()\n'
-        '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
-        '    logger.remove(_log_handler_id)\n'
-        '    if verbose:\n'
-        '        logger.add(\n'
-        '            sys.stderr,\n'
-        '            format=(\n'
-        '                "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '                "<level>{level: <5}</level> | "\n'
-        '                "<cyan>{extra[channel]}</cyan> | "\n'
-        '                "<level>{message}</level>"\n'
-        '            ),\n'
-        '            level="DEBUG",\n'
-        '            colorize=None,\n'
-        '            filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '        )\n'
-        '    logger.add(\n'
-        '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
-        '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
-        '        level="INFO",\n'
-        '        rotation="1 day",\n'
-        '        retention="14 days",\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )'
-    )
-    old_intermediate = (
-        '    _log_dir = (runtime_config.workspace_path.parent / "logs").resolve()\n'
-        '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
-        '    logger.remove(_log_handler_id)\n'
-        '    logger.add(\n'
-        '        sys.stderr,\n'
-        '        format=(\n'
-        '            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '            "<level>{level: <5}</level> | "\n'
-        '            "<cyan>{extra[channel]}</cyan> | "\n'
-        '            "<level>{message}</level>"\n'
-        '        ),\n'
-        '        level="DEBUG" if verbose else "INFO",\n'
-        '        colorize=None,\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )\n'
-        '    logger.add(\n'
-        '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
-        '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
-        '        level="DEBUG",\n'
-        '        rotation="1 day",\n'
-        '        retention="14 days",\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )'
     )
     new = (
         '    runtime_config = _load_runtime_config(config, workspace)\n'
@@ -229,18 +237,7 @@ def patch_serve(content):
         '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
         '    # Remove ALL existing handlers (incl. loguru default id=0 at DEBUG) so they do not leak through.\n'
         '    logger.remove()\n'
-        '    logger.add(\n'
-        '        sys.stderr,\n'
-        '        format=(\n'
-        '            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '            "<level>{level: <5}</level> | "\n'
-        '            "<cyan>{extra[channel]}</cyan> | "\n'
-        '            "<level>{message}</level>"\n'
-        '        ),\n'
-        '        level="DEBUG" if verbose else "INFO",\n'
-        '        colorize=None,\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )\n'
+        + _STDERR_BLOCK.replace('__COND__', 'verbose') + '\n'
         '    logger.add(\n'
         '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
         '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
@@ -250,15 +247,10 @@ def patch_serve(content):
         '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
         '    )'
     )
-    return simple_replace_any(content, [old_upstream, old_previous, old_intermediate], new, "4a. serve() terminal=INFO file=DEBUG")
+    return _patch_log_handlers(content, 'verbose', old_upstream, new, "4a. serve() terminal=INFO file=DEBUG")
 
 def patch_gateway(content):
-    """4b. gateway(): terminal=INFO (clean UX), file=DEBUG (full detail). --verbose elevates terminal to DEBUG.
-
-    Matches upstream original (variant 1), the previous lite-patch output (variant 2),
-    or the intermediate state where the new comment+level were applied but
-    logger.remove(_log_handler_id) was not yet replaced with logger.remove() (variant 3).
-    """
+    """4b. gateway(): terminal=INFO (clean UX), file=DEBUG (full detail). --verbose elevates terminal to DEBUG."""
     old_upstream = (
         '    if verbose:\n'
         '        logger.remove(_log_handler_id)\n'
@@ -276,35 +268,6 @@ def patch_gateway(content):
         '        )\n'
         '    cfg = _load_runtime_config(config, workspace)'
     )
-    old_previous = (
-        '    cfg = _load_runtime_config(config, workspace)\n'
-        '\n'
-        '    # Redirect loguru from stderr to file, terminal only if verbose.\n'
-        '    _log_dir = (cfg.workspace_path.parent / "logs").resolve()\n'
-        '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
-        '    logger.remove(_log_handler_id)\n'
-        '    if verbose:\n'
-        '        logger.add(\n'
-        '            sys.stderr,\n'
-        '            format=(\n'
-        '                "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '                "<level>{level: <5}</level> | "\n'
-        '                "<cyan>{extra[channel]}</cyan> | "\n'
-        '                "<level>{message}</level>"\n'
-        '            ),\n'
-        '            level="DEBUG",\n'
-        '            colorize=None,\n'
-        '            filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '        )\n'
-        '    logger.add(\n'
-        '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
-        '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
-        '        level="WARNING",\n'
-        '        rotation="1 day",\n'
-        '        retention="14 days",\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )'
-    )
     new = (
         '    cfg = _load_runtime_config(config, workspace)\n'
         '\n'
@@ -314,18 +277,7 @@ def patch_gateway(content):
         '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
         '    # Remove ALL existing handlers (incl. loguru default id=0 at DEBUG) so they do not leak through.\n'
         '    logger.remove()\n'
-        '    logger.add(\n'
-        '        sys.stderr,\n'
-        '        format=(\n'
-        '            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '            "<level>{level: <5}</level> | "\n'
-        '            "<cyan>{extra[channel]}</cyan> | "\n'
-        '            "<level>{message}</level>"\n'
-        '        ),\n'
-        '        level="DEBUG" if verbose else "INFO",\n'
-        '        colorize=None,\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )\n'
+        + _STDERR_BLOCK.replace('__COND__', 'verbose') + '\n'
         '    logger.add(\n'
         '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
         '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
@@ -335,90 +287,15 @@ def patch_gateway(content):
         '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
         '    )'
     )
-    old_intermediate = (
-        '    _log_dir = (cfg.workspace_path.parent / "logs").resolve()\n'
-        '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
-        '    logger.remove(_log_handler_id)\n'
-        '    logger.add(\n'
-        '        sys.stderr,\n'
-        '        format=(\n'
-        '            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '            "<level>{level: <5}</level> | "\n'
-        '            "<cyan>{extra[channel]}</cyan> | "\n'
-        '            "<level>{message}</level>"\n'
-        '        ),\n'
-        '        level="DEBUG" if verbose else "INFO",\n'
-        '        colorize=None,\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )\n'
-        '    logger.add(\n'
-        '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
-        '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
-        '        level="DEBUG",\n'
-        '        rotation="1 day",\n'
-        '        retention="14 days",\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )'
-    )
-    return simple_replace_any(content, [old_upstream, old_previous, old_intermediate], new, "4b. gateway() terminal=INFO file=DEBUG")
+    return _patch_log_handlers(content, 'verbose', old_upstream, new, "4b. gateway() terminal=INFO file=DEBUG")
 
 def patch_agent(content):
-    """4c. agent(): terminal=INFO (heartbeat etc.), file=DEBUG (full detail). --logs elevates terminal to DEBUG.
-
-    Matches upstream original (variant 1) or the previous lite-patch output (variant 2).
-    """
+    """4c. agent(): terminal=INFO (heartbeat etc.), file=DEBUG (full detail). --logs elevates terminal to DEBUG."""
     old_upstream = (
         '\n    if logs:\n'
         '        logger.enable("nanobot")\n'
         '    else:\n'
         '        logger.disable("nanobot")'
-    )
-    old_previous = (
-        '\n'
-        '    # Redirect loguru from stderr to file, just WARNING+ so that the conversation does not join.\n'
-        '    _log_dir = (config.workspace_path.parent / "logs").resolve()\n'
-        '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
-        '    try:\n'
-        '        logger.remove(_log_handler_id)\n'
-        '    except ValueError:\n'
-        '        pass\n'
-        '    logger.add(\n'
-        '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
-        '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
-        '        level="WARNING",\n'
-        '        rotation="1 day",\n'
-        '        retention="14 days",\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )'
-    )
-    old_intermediate = (
-        '\n'
-        '    _log_dir = (config.workspace_path.parent / "logs").resolve()\n'
-        '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
-        '    try:\n'
-        '        logger.remove(_log_handler_id)\n'
-        '    except ValueError:\n'
-        '        pass\n'
-        '    logger.add(\n'
-        '        sys.stderr,\n'
-        '        format=(\n'
-        '            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '            "<level>{level: <5}</level> | "\n'
-        '            "<cyan>{extra[channel]}</cyan> | "\n'
-        '            "<level>{message}</level>"\n'
-        '        ),\n'
-        '        level="DEBUG" if logs else "INFO",\n'
-        '        colorize=None,\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )\n'
-        '    logger.add(\n'
-        '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
-        '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
-        '        level="DEBUG",\n'
-        '        rotation="1 day",\n'
-        '        retention="14 days",\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )'
     )
     new = (
         '\n'
@@ -428,18 +305,7 @@ def patch_agent(content):
         '    _log_dir.mkdir(parents=True, exist_ok=True)\n'
         '    # Remove ALL existing handlers (incl. loguru default id=0 at DEBUG) so they do not leak through.\n'
         '    logger.remove()\n'
-        '    logger.add(\n'
-        '        sys.stderr,\n'
-        '        format=(\n'
-        '            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "\n'
-        '            "<level>{level: <5}</level> | "\n'
-        '            "<cyan>{extra[channel]}</cyan> | "\n'
-        '            "<level>{message}</level>"\n'
-        '        ),\n'
-        '        level="DEBUG" if logs else "INFO",\n'
-        '        colorize=None,\n'
-        '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
-        '    )\n'
+        + _STDERR_BLOCK.replace('__COND__', 'logs') + '\n'
         '    logger.add(\n'
         '        _log_dir / "nanobot_{time:YYYY-MM-DD}.log",\n'
         '        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <5} | {extra[channel]} | {message}",\n'
@@ -449,7 +315,7 @@ def patch_agent(content):
         '        filter=lambda record: record["extra"].setdefault("channel", "-") or True,\n'
         '    )'
     )
-    return simple_replace_any(content, [old_upstream, old_previous, old_intermediate], new, "4c. agent() terminal=INFO file=DEBUG")
+    return _patch_log_handlers(content, 'logs', old_upstream, new, "4c. agent() terminal=INFO file=DEBUG")
 
 def patch_multiline(content):
     """4d. _init_prompt_session(): set multiline=True untuk multi-baris input."""
