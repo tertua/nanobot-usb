@@ -120,7 +120,7 @@ start_gate.bat / start_chat.bat
 | File | Function |
 |------|----------|
 | `scripts/env_crypt.py` | Encrypt/decrypt AES-256-GCM + scrypt |
-| `scripts/edit_env.ps1` | Safe editor: open -> edit -> auto-encrypt |
+| `edit_env.bat` | Safe editor: open -> edit -> auto-encrypt |
 | `data/.env.encrypted` | Encrypted file (salt + nonce + ciphertext + tag) |
 | `data/.env_key` | Optional: passphrase cache for non-interactive mode |
 | `data/.env` | Plaintext file (only exists during edit, immediately deleted) |
@@ -150,12 +150,10 @@ bin\python.exe scripts\healthcheck.py
 
 ## Using Other Providers
 
-### Azure OpenAI
+### OpenAI API Compatible
 ```env
-OPENAI_API_TYPE=azure
-OPENAI_API_BASE=https://your-resource.openai.azure.com/
-OPENAI_API_KEY=your-azure-key
-AZURE_API_VERSION=2023-12-01-preview
+CUSTOM_API_BASE=https://your-custom-url/v1
+CUSTOM_API_KEY=sk-your-api-key
 ```
 
 ## Update to Latest Version
@@ -174,7 +172,7 @@ Runtime is built-in `bin/Lib/site-packages/`. The `app/` folder is only a tempor
 
 ## Uninstall
 
-Simply delete the `nanobot-usb/` folder -- nothing is installed on the system.
+Backup `data` folder and then delete the `nanobot-usb/` folder -- nothing is installed on the system.
 
 ---
 
