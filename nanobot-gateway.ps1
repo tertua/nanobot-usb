@@ -40,7 +40,7 @@ try {
     if ($cfg.api -and $cfg.api.port)                       { $HTTP_PORT = [int]$cfg.api.port }
     if ($cfg.channels.websocket -and $cfg.channels.websocket.port) { $WS_PORT   = [int]$cfg.channels.websocket.port }
 } catch {
-    Write-Warn "Could not read ports from $CONFIG : $($_.Exception.Message). Using defaults."
+    Write-Warning "Could not read ports from $CONFIG : $($_.Exception.Message). Using defaults."
 }
 
 if (-not $HTTP_PORT) { $HTTP_PORT = 8900 }
@@ -62,37 +62,44 @@ if (-not (Test-Path $CONFIG)) {
     exit 1
 }
 
-# -- Check / kill process on target port -----------------------------
-$portInUse = $false
-try {
-    $netstat = netstat -ano | Select-String ":$WS_PORT " | Select-String "LISTENING"
-    if ($netstat) {
-        $portInUse = $true
-    }
-} catch { }
-
-if ($portInUse) {
-    Write-Host "`n  [INFO] Port $WS_PORT already in use." -ForegroundColor Yellow
-    $choice = $host.UI.PromptForChoice("Port Conflict", "Kill the process using it and restart?", @("&Yes", "&No"), 1)
-    if ($choice -eq 0) {
-        try {
-            $netstat | ForEach-Object {
+# -- Port cleanup ----------------------------------------------------
+function Stop-ProcessOnPort {
+    param([Parameter(Mandatory=$true)][int]$Port)
+    try {
+        $lines = netstat -ano | Select-String ":$Port " | Select-String "LISTENING"
+        if ($lines) {
+            $lines | ForEach-Object {
                 if ($_ -match '\s+(\d+)$') {
-                    $pid = $matches[1]
-                    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+                    Stop-Process -Id ([int]$matches[1]) -Force -ErrorAction SilentlyContinue
                 }
             }
-            Start-Sleep -Seconds 2
-        } catch { }
-    } else {
-        exit 0
-    }
+        }
+    } catch { }
 }
+
+function Stop-GatewayProcess {
+    Stop-ProcessOnPort -Port $HTTP_PORT
+    Stop-ProcessOnPort -Port $WS_PORT
+}
+
+# Defensive: if PowerShell exits mid-run (e.g. user kills the window),
+# release the ports so the next launch doesn't have to fight a TIME_WAIT.
+$null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
+    netstat -ano | Select-String ":$HTTP_PORT " | Select-String "LISTENING" | ForEach-Object {
+        if ($_ -match '\s+(\d+)$') { Stop-Process -Id $matches[1] -Force -ErrorAction SilentlyContinue }
+    }
+    netstat -ano | Select-String ":$WS_PORT " | Select-String "LISTENING" | ForEach-Object {
+        if ($_ -match '\s+(\d+)$') { Stop-Process -Id $matches[1] -Force -ErrorAction SilentlyContinue }
+    }
+} | Out-Null
+
+# -- Kill any stale processes on target ports -----------------------
+Stop-GatewayProcess
 
 # -- Banner ----------------------------------------------------------
 Write-Host "`n"
 Write-Host "  $('=' * 49)" -ForegroundColor Cyan
-Write-Host "       NANOBOT GATEWAY - Simata.id" -ForegroundColor Cyan
+Write-Host "       NANOBOT GATEWAY" -ForegroundColor Cyan
 Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "`n"
 
@@ -101,7 +108,8 @@ Write-Host "  Conf  : $CONFIG" -ForegroundColor Green
 Write-Host "  Works : $WORKSPACE" -ForegroundColor Green
 Write-Host "`n"
 Write-Host "  Host  : $WS_HOST" -ForegroundColor Green
-Write-Host "  Port  : $WS_PORT" -ForegroundColor Green
+Write-Host "  HTTP  : $HTTP_PORT" -ForegroundColor Green
+Write-Host "  WS    : $WS_PORT" -ForegroundColor Green
 Write-Host "  $('=' * 47)" -ForegroundColor Cyan
 Write-Host "`n  Please wait..." -ForegroundColor Yellow
 
@@ -132,20 +140,7 @@ $PortablePaths = @(
 )
 $env:PATH = ($PortablePaths -join ';') + ';' + $env:PATH
 
-# -- Kill existing processes on same ports --------------------------
-try {
-    netstat -ano | Select-String ":$HTTP_PORT " | Select-String "LISTENING" | ForEach-Object {
-        if ($_ -match '\s+(\d+)$') {
-            Stop-Process -Id $matches[1] -Force -ErrorAction SilentlyContinue
-        }
-    }
-    netstat -ano | Select-String ":$WS_PORT " | Select-String "LISTENING" | ForEach-Object {
-        if ($_ -match '\s+(\d+)$') {
-            Stop-Process -Id $matches[1] -Force -ErrorAction SilentlyContinue
-        }
-    }
-} catch { }
-
+# -- Browser URL -----------------------------------------------------
 Write-Host "`n"
 Write-Host "  Browser: http://$WS_HOST`:$WS_PORT" -ForegroundColor Green
 Write-Host "`n"
@@ -165,7 +160,11 @@ try {
     $exitCode = 1
 }
 
+if ($exitCode -eq 0) {
+    Write-Host "  Nanobot Gateway Stopped." -ForegroundColor Cyan
+} else {
+    Write-Host "  Nanobot Gateway stopped with error code: $exitCode" -ForegroundColor Red
+}
 Write-Host "`n"
-Write-Host "  Nanobot Gateway Stopped." -ForegroundColor Cyan
-Write-Host "`n  Press Enter to exit..." -NoNewline
-$null = Read-Host
+
+exit $exitCode

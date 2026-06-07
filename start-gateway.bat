@@ -18,13 +18,18 @@ echo  ^>^> Starting Gateway ^<^<
 echo.
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0nanobot-gateway.ps1"
+set "RC=%errorlevel%"
 
-if %errorlevel% neq 0 (
+if %RC% neq 0 (
     echo.
-    echo  [ERROR] Nanobot exited with code %errorlevel%
+    echo  [ERROR] Nanobot exited with code %RC%
     echo  Check setup_log.txt or run setup.bat first.
     echo.
-    pause
+) else (
+    echo.
+    echo  Nanobot Gateway Stopped.
+    echo.
 )
 
-exit /b %errorlevel%
+pause
+exit /b %RC%
