@@ -150,7 +150,7 @@ bin\python.exe scripts\healthcheck.py
 
 ## Using Other Providers
 
-### OpenAI API Compatible
+### OpenAI-Compatible API
 ```env
 CUSTOM_API_BASE=https://your-custom-url/v1
 CUSTOM_API_KEY=sk-your-api-key
