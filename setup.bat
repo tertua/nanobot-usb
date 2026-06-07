@@ -73,7 +73,7 @@ echo.
 
 powershell -NoProfile -Command "$PSVersionTable.PSVersion.Major" >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Windows PowerShell tidak tersedia atau rusak.
+    echo [ERROR] Windows PowerShell unavailable or damaged.
     echo         Make sure Windows PowerShell 5.1+ is exist.
     pause
     exit /b 1
@@ -88,7 +88,7 @@ if %PS_MAJOR% LSS 5 (
     exit /b 1
 )
 
-echo [OK] Windows PowerShell %PS_MAJOR%.x terdeteksi.
+echo [OK] Windows PowerShell %PS_MAJOR%.x detected.
 echo.
 
 rem ── Run main setup ────────────────────────────────────────
@@ -98,7 +98,7 @@ echo ================================================================
 echo.
 
 if not exist "%SETUP_SCRIPT%" (
-    echo [ERROR] Script setup tidak ditemukan: %SETUP_SCRIPT%
+    echo [ERROR] Setup script not found: %SETUP_SCRIPT%
     pause
     exit /b 1
 )
@@ -113,7 +113,7 @@ echo ================================================================
 echo.
 
 if %EXIT_CODE% neq 0 (
-    echo [WARN] Setup utama keluar dengan error code %EXIT_CODE%.
+    echo [WARN] The main setup exits with error code %EXIT_CODE%.
     pause
     exit /b %EXIT_CODE%
 )
