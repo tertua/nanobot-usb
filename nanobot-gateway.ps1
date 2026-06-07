@@ -32,20 +32,15 @@ $PY        = Join-Path $ROOT "bin\python.exe"
 $CONFIG    = Join-Path $DATA_DIR "config.json"
 $WORKSPACE = Join-Path $DATA_DIR "workspace"
 
-# -- Read ports from config.json via Python ----------------------------
+# -- Read ports from config.json --------------------------------------
 $HTTP_PORT = $null
 $WS_PORT   = $null
 try {
-    $configJson = & $PY -c "import json; c=json.load(open(r'$CONFIG')); print(c['api']['port'], c['channels']['websocket']['port'])" 2>$null
-    if ($LASTEXITCODE -eq 0 -and $configJson) {
-        $parts = $configJson.Trim() -split '\s+'
-        if ($parts.Count -ge 2) {
-            $HTTP_PORT = $parts[0]
-            $WS_PORT   = $parts[1]
-        }
-    }
+    $cfg = Get-Content -Path $CONFIG -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($cfg.api -and $cfg.api.port)                       { $HTTP_PORT = [int]$cfg.api.port }
+    if ($cfg.channels.websocket -and $cfg.channels.websocket.port) { $WS_PORT   = [int]$cfg.channels.websocket.port }
 } catch {
-    # fallback to defaults
+    Write-Warn "Could not read ports from $CONFIG : $($_.Exception.Message). Using defaults."
 }
 
 if (-not $HTTP_PORT) { $HTTP_PORT = 8900 }
