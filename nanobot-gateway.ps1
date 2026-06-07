@@ -132,6 +132,7 @@ Load-EnvEncrypted -Root $ROOT -DataDir $DATA_DIR -Python $PY
 # -- Inject portable PATH --------------------------------------------
 $PortablePaths = @(
     Join-Path $ROOT "bin"
+    Join-Path $ROOT "bin\gh\bin"
     Join-Path $ROOT "bin\nodejs"
     Join-Path $ROOT "bin\git\cmd"
     Join-Path $ROOT "bin\git\mingw64\bin"

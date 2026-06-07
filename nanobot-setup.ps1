@@ -46,12 +46,14 @@ $ProcArch = [Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE")
 $ArchPython      = if ($Is64) { "amd64" } else { "win32" }
 $ArchNode        = if ($ProcArch -eq "ARM64") { "arm64" } elseif ($Is64) { "x64" } else { "x86" }
 $ArchMinGit      = if ($Is64) { "64-bit" } else { "32-bit" }
+$ArchGh          = if ($ProcArch -eq "ARM64") { "arm64" } elseif ($Is64) { "amd64" } else { "386" }
 $MinGwDir        = if ($Is64) { "mingw64\bin" } else { "mingw32\bin" }
 
 # Software version
 $PyVer      = "3.12.0"
 $GitVer     = "2.54.0"
 $NodeVer    = "24.16.0"
+$GhVer      = "2.93.0"
 
 Write-Host "  $('=' * 49)" -ForegroundColor Cyan
 Write-Host "       NANOBOT Portable Setup - Simata.id" -ForegroundColor Cyan
@@ -131,6 +133,7 @@ Write-OK ""
 try {
     . (Join-Path $SCRIPTS_DIR "setup\install_python.ps1")
     . (Join-Path $SCRIPTS_DIR "setup\install_git.ps1")
+    . (Join-Path $SCRIPTS_DIR "setup\install_gh.ps1")
     . (Join-Path $SCRIPTS_DIR "setup\install_nodejs.ps1")
     . (Join-Path $SCRIPTS_DIR "setup\install_source.ps1")
     . (Join-Path $SCRIPTS_DIR "setup\install_deps.ps1")

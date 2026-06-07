@@ -48,6 +48,7 @@ def detect_software(root: str) -> dict[str, str]:
     git_dir = os.path.join(root, "bin", "git", "cmd")
     scripts_dir = os.path.join(root, "scripts")
     nodejs_dir = os.path.join(root, "bin", "nodejs")
+    gh_dir = os.path.join(root, "bin", "gh", "bin")
 
     # Python
     py_exe = os.path.join(py_dir, "python.exe")
@@ -84,6 +85,17 @@ def detect_software(root: str) -> dict[str, str]:
         m = re.search(r"v(\d+\.\d+\.\d+)", ver)
         if m:
             sw["nodejs"] = m.group(1)
+
+    # GitHub CLI (portable first)
+    gh_exe = os.path.join(gh_dir, "gh.exe")
+    if not os.path.isfile(gh_exe):
+        gh_exe = "gh.exe"
+    ver = _run([gh_exe, "--version"])
+    if ver:
+        # "gh version 2.93.0 (2026-01-15)\nhttps://..."
+        m = re.search(r"(\d+\.\d+\.\d+)", ver)
+        if m:
+            sw["gh"] = m.group(1)
 
     # Windows PowerShell (built-in)
     ps_exe = "powershell.exe"
@@ -159,7 +171,7 @@ def write_lockhead(root: str) -> None:
 
     lines.append("")
     lines.append("[software]")
-    for key in ("python", "nanobot", "git", "nodejs", "powershell"):
+    for key in ("python", "nanobot", "git", "nodejs", "gh", "powershell"):
         val = software.get(key, "")
         if val:
             lines.append(f"{key}={val}")
