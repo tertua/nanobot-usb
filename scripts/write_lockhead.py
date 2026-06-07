@@ -164,7 +164,29 @@ def write_lockhead(root: str) -> None:
         if val:
             lines.append(f"{key}={val}")
 
-    lines.append("")
+    # Preserve any section that write_lockhead doesn't manage. Currently [system]
+    # and [software] are managed; everything else (e.g. [sha], future [license])
+    # is carried over so setup.bat re-runs don't clobber sibling data.
+    _managed = ("[system]", "[software]")
+    if lockhead.exists():
+        try:
+            old = lockhead.read_text(encoding="utf-8").splitlines()
+            preserve_section = False
+            preserved = []
+            for raw in old:
+                line = raw.strip()
+                if line.startswith("["):
+                    preserve_section = line.lower() not in _managed
+                    if preserve_section:
+                        preserved.append(raw)
+                elif preserve_section:
+                    preserved.append(raw)
+            if preserved:
+                lines.append("")
+                lines.extend(preserved)
+        except Exception:
+            pass
+
     lockhead.write_text("\n".join(lines), encoding="utf-8")
     print(f"  lockhead written  -> {lockhead}")
     print(f"  {system['hostname']} | {system['device']} | {system['os']}")
