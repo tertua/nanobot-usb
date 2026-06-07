@@ -44,7 +44,7 @@ Write-OK ""
 # ===== STEP 7: CONFIGURATION =====
 Write-Step "===== STEP 7: GENERATE CONFIGURATION ====="
 $ConfigFile = Join-Path $DATA_DIR "config.json"
-$WorkspaceDir = "data/.nanobot/workspace"
+$WorkspaceDir = "data/workspace"
 if (Test-Path $ConfigFile) {
     Write-Info "config.json already exists. Skipping."
 } else {
