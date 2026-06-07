@@ -1,6 +1,6 @@
 ﻿# sync_webui.ps1 - Copy manually-built webui from data\webui\ to installed package
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File sync_webui.ps1
-#        or run webui-sync.bat wrapper.
+#        or run sync-webui.bat wrapper.
 #
 # Why: Lite sets $env:NANOBOT_SKIP_WEBUI_BUILD=1 in install_deps.ps1, so the
 # upstream hatch hook never builds nanobot\web\dist\. The gateway checks

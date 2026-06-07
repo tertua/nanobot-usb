@@ -1,6 +1,6 @@
 ﻿# install_webui.ps1 - Build upstream webui and sync to installed package
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File install_webui.ps1
-#        or run webui-build.bat
+#        or run build-webui.bat
 #
 # Why: Lite sets NANOBOT_SKIP_WEBUI_BUILD=1 in install_deps.ps1, so the upstream
 # hatch hook never builds nanobot\web\dist\. This script is the manual
@@ -16,7 +16,7 @@
 # portable. Bun is not used here.
 #
 # Failure: exits 1 with clear error. setup.bat is unaffected (this is a
-# separate, manual step). User can re-run webui-build.bat to retry.
+# separate, manual step). User can re-run build-webui.bat to retry.
 #
 # Idempotent: npm install is incremental (skips already-installed packages).
 # node_modules persists across runs.
@@ -31,7 +31,7 @@ $ROOT = Split-Path -Parent $ScriptDir
 # -- Inject portable PATH ---------------------------------------------------
 # npm.cmd resolves its own node via %dp0%\node.exe, but child processes
 # it spawns (e.g. esbuild's install.js: 'cmd.exe /d /s /c node install.js')
-# need `node` in PATH. webui-build.bat does not set PATH, so we inject the
+# need `node` in PATH. build-webui.bat does not set PATH, so we inject the
 # same portable paths that nanobot-agent.ps1 / nanobot-gateway.ps1 use.
 # Session-scoped — does not touch the host. Restores on script exit.
 $DATA_DIR = Join-Path $ROOT "data"
@@ -55,7 +55,7 @@ $IndexOut  = Join-Path $BuildOut "index.html"
 if (-not (Test-Path $WebPkgJson)) {
     Write-Host "[ERROR] app\webui\package.json not found." -ForegroundColor Red
     Write-Host "         Lite ZIP install does not include webui source." -ForegroundColor Red
-    Write-Host "         Run setup.bat (clones from git) before webui-build.bat." -ForegroundColor Red
+    Write-Host "         Run setup.bat (clones from git) before build-webui.bat." -ForegroundColor Red
     exit 1
 }
 

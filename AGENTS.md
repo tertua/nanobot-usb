@@ -50,7 +50,7 @@ Setup log: `setup_log.txt`. Runtime logs land in `data\logs\nanobot_YYYY-MM-DD.l
 
 ## Editing rules that will surprise you
 
-- **Whitelist `.gitignore`.** The root `.gitignore` starts with `/*` and only re-allows specific paths. Any new top-level file or directory must be added to `.gitignore` with a `!/path` rule, otherwise it will silently not be tracked. Confirmed tracked set: `setup.bat`, `start-chat.bat`, `start-gateway.bat`, `edit_env.bat`, `check_update.bat`, `webui-build.bat`, `webui-sync.bat`, the three `nanobot-*.ps1` files, `scripts/` tree (recursive), `README.md`, `SECURITY.md`, `AGENTS.md`, `LICENSE`, `.github/`, `.gitattributes`, `.gitignore`.
+- **Whitelist `.gitignore`.** The root `.gitignore` starts with `/*` and only re-allows specific paths. Any new top-level file or directory must be added to `.gitignore` with a `!/path` rule, otherwise it will silently not be tracked. Confirmed tracked set: `setup.bat`, `start-chat.bat`, `start-gateway.bat`, `edit_env.bat`, `check_update.bat`, `build-webui.bat`, `sync-webui.bat`, the three `nanobot-*.ps1` files, `scripts/` tree (recursive), `README.md`, `SECURITY.md`, `AGENTS.md`, `LICENSE`, `.github/`, `.gitattributes`, `.gitignore`.
 - **Line endings are enforced.** `.gitattributes` pins `*.ps1`/`*.bat`/`*.vbs`/etc. to CRLF and `*.py`/`*.md`/`*.json`/etc. to LF. Don't re-save `.ps1` files as LF — PowerShell 5.1 chokes on them.
 - **Hard-coded upstream versions live in `nanobot-setup.ps1`** (`$PyVer`, `$GitVer`, `$NodeVer`, `$ArchPython`, `$ArchNode`, `$ArchMinGit`, `$MinGwDir`). Bump them there; nothing reads a manifest.
 - **`check_update.bat` is standalone.** It calls the GitHub API for `tertua/nanobot-usb` `lite` and compares against `data\.wrapper_sha` (gitignored). First run records a baseline; subsequent runs notify (one yellow line) or say OK. It does **not** auto-update nanobot itself — re-running `setup.bat` from a fresh release is the update path. Delete `data\.wrapper_sha` to reset the baseline.
@@ -70,21 +70,13 @@ Setup log: `setup_log.txt`. Runtime logs land in `data\logs\nanobot_YYYY-MM-DD.l
 
 ## Optional: WebUI drop zone
 
-Lite skips the upstream webui build (`install_deps.ps1:28` sets `NANOBOT_SKIP_WEBUI_BUILD=1`) to stay small. The simpler path is `webui-build.bat`, which builds and syncs in one shot. The drop-zone flow below is only needed when you build the webui on a *different* machine from the one running nanobot, or want to hand-curate the dist contents.
+For cross-machine builds (build on a dev box, then copy to USB): drop the webui `dist/*` into `data\webui\`, then `sync-webui.bat` to install. Idempotent (mtime check) — re-run after every `setup.bat` since Lite's `pip install --no-deps` wipes the installed `dist\`. Same-machine builds should use `build-webui.bat` (one-shot build + sync).
 
-To make that copy durable and re-runnable:
-
-1. Build: `cd app\webui && npm install && npm run build` → outputs to `app\nanobot\web\dist\`.
-2. Copy the `dist/` contents into `data\webui\` (any layout you like — the helper copies everything verbatim into `nanobot\web\dist\`).
-3. Run `webui-sync.bat` to push `data\webui\*` into the installed package.
-
-The helper (`scripts/sync_webui.ps1`) is idempotent: it skips the copy if the installed `dist\index.html` is newer than the drop zone. Re-run after every `setup.bat` (Lite's `pip install --no-deps` will not preserve the webui) or after editing `data\webui\`.
-
-Detect: `bin\Lib\site-packages\nanobot\web\dist\index.html` must exist after sync. Upstream checks `is_dir()` on that path via `_default_webui_dist()` in `nanobot/channels/manager.py`.
+Detect: `bin\Lib\site-packages\nanobot\web\dist\index.html` must exist after sync; upstream checks `is_dir()` on that path via `_default_webui_dist()` in `nanobot/channels/manager.py`.
 
 ## Optional: WebUI auto-build
 
-Manual trigger via `webui-build.bat` — not part of `setup.bat`. Use this if you want a one-shot build with auto-sync.
+Manual trigger via `build-webui.bat` — not part of `setup.bat`. Use this if you want a one-shot build with auto-sync.
 
 The script (`scripts/install_webui.ps1`):
 
@@ -95,7 +87,7 @@ The script (`scripts/install_webui.ps1`):
 
 **Why npm only, not bun**: bun is not used here. Lite redirects `HOME`/`USERPROFILE` to the USB via `init_portable.ps1`, which makes bun's HOME-relative package store (`~/.bun/install/cache/`) land on the USB filesystem. On exFAT/FAT32 the `MoveFileEx` writes fail with `EINVAL: Invalid argument`, and bun exits 0 leaving `node_modules` incomplete. There is no bun flag/env that disables the package-store cache — only `--no-cache`, which skips the manifest cache (binary `*.npm` registry metadata) and does not affect the package store. npm's flat `node_modules/` writes work on any filesystem, so npm is the only path that is truly portable.
 
-If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `webui-build.bat` after fixing the issue.
+If the build fails, the script exits 1 with a clear error. Setup was already completed; you can re-run `build-webui.bat` after fixing the issue.
 
 ## Skills auto-disabled by Lite
 

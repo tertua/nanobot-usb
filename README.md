@@ -24,8 +24,8 @@ nanobot-usb/
 |-- start-chat.bat          # Batch launcher for chat
 |-- start-gateway.bat       # Batch launcher for gateway
 |-- check_update.bat        # Check for newer Lite release
-|-- webui-build.bat         # Build upstream webui + sync (npm)
-|-- webui-sync.bat          # Push data\webui\ drop zone to site-packages
+|-- build-webui.bat         # Build upstream webui + sync (npm)
+|-- sync-webui.bat          # Push data\webui\ drop zone to site-packages
 |-- scripts/
 |   |-- init_portable.ps1
 |   |-- env_crypt.py

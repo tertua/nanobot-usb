@@ -29,8 +29,8 @@ __pycache__/
 !/start-chat.bat
 !/start-gateway.bat
 !/edit_env.bat
-!/webui-sync.bat
-!/webui-build.bat
+!/sync-webui.bat
+!/build-webui.bat
 
 # All Markdown
 !/CHANGELOG.md
