@@ -56,16 +56,7 @@ Write-Host "`n"
 # -- Load .env (AES-GCM scrypt) --------------------------------------
 Load-EnvEncrypted -Root $ROOT -DataDir $DATA_DIR -Python $PY
 
-# -- Inject portable PATH --------------------------------------------
-$PortablePaths = @(
-    Join-Path $ROOT "bin"
-    Join-Path $ROOT "bin\gh\bin"
-    Join-Path $ROOT "bin\nodejs"
-    Join-Path $ROOT "bin\git\cmd"
-    Join-Path $ROOT "bin\git\mingw64\bin"
-    Join-Path $ROOT "scripts"
-    $DATA_DIR
-)
+# -- Inject portable PATH (from scripts/init_portable.ps1) ------------
 $env:PATH = ($PortablePaths -join ';') + ';' + $env:PATH
 
 # -- Resolve workspace from config.json ------------------------------

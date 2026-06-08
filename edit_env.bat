@@ -5,7 +5,7 @@ title Nanobot Protect .env
 
 set "ROOT=%~dp0"
 set "PY=%ROOT%bin\python.exe"
-set "PATH=%ROOT%bin;%ROOT%bin\nodejs;%ROOT%scripts;%ROOT%data;%PATH%"
+set "PATH=%ROOT%bin;%ROOT%bin\Scripts;%ROOT%bin\nodejs;%ROOT%scripts;%ROOT%data;%PATH%"
 set "HOME=%ROOT%data\home"
 set "NPM_CONFIG_CACHE=%ROOT%tmp\npm-cache"
 set "NPM_CONFIG_PREFIX=%ROOT%bin\nodejs\global"

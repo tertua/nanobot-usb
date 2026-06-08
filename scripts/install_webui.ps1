@@ -28,22 +28,13 @@ $ScriptDir = $PSScriptRoot
 if (-not $ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $ROOT = Split-Path -Parent $ScriptDir
 
-# -- Inject portable PATH ---------------------------------------------------
-# npm.cmd resolves its own node via %dp0%\node.exe, but child processes
-# it spawns (e.g. esbuild's install.js: 'cmd.exe /d /s /c node install.js')
-# need `node` in PATH. build-webui.bat does not set PATH, so we inject the
-# same portable paths that nanobot-agent.ps1 / nanobot-gateway.ps1 use.
-# Session-scoped — does not touch the host. Restores on script exit.
-$DATA_DIR = Join-Path $ROOT "data"
-$PortablePaths = @(
-    Join-Path $ROOT "bin"
-    Join-Path $ROOT "bin\gh\bin"
-    Join-Path $ROOT "bin\nodejs"
-    Join-Path $ROOT "bin\git\cmd"
-    Join-Path $ROOT "bin\git\mingw64\bin"
-    Join-Path $ROOT "scripts"
-    $DATA_DIR
-)
+# -- Load portable environment setup -----------------------------------------
+. (Join-Path $ROOT "scripts\init_portable.ps1")
+
+# -- Inject portable PATH (from scripts/init_portable.ps1) ------------------
+# npm.cmd resolves its own node via %dp0%\node.exe, but child processes it
+# spawns (e.g. esbuild's install.js) need `node` in PATH. PortablePaths from
+# init_portable.ps1 provides that.
 $env:PATH = ($PortablePaths -join ';') + ';' + $env:PATH
 
 # -- Paths ------------------------------------------------------------------

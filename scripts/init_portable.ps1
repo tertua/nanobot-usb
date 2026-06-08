@@ -31,6 +31,18 @@ $Env:PIP_CACHE_DIR    = Join-Path $TMP_DIR "pip-cache"
 $Env:NPM_CONFIG_CACHE = Join-Path $TMP_DIR "npm-cache"
 $Env:NPM_CONFIG_PREFIX = Join-Path $ROOT "bin\nodejs\global"
 
+# -- Portable PATH entries (shared by all launchers) ------------------
+$PortablePaths = @(
+    Join-Path $ROOT "bin"
+    Join-Path $ROOT "bin\Scripts"
+    Join-Path $ROOT "bin\gh\bin"
+    Join-Path $ROOT "bin\nodejs"
+    Join-Path $ROOT "bin\git\cmd"
+    Join-Path $ROOT "bin\git\mingw64\bin"
+    Join-Path $ROOT "scripts"
+    $DATA_DIR
+)
+
 # -- Create portable directories if missing ---------------------------
 if (-not (Test-Path $HOME_DIR)) { 
     New-Item -ItemType Directory -Path $HOME_DIR -Force | Out-Null 

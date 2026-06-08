@@ -129,6 +129,8 @@ try {
 Write-OK "OK"
 Write-OK ""
 
+$env:PATH = ($PortablePaths -join ';') + ';' + $env:PATH
+
 # ===== INSTALL MODULES =====
 try {
     . (Join-Path $SCRIPTS_DIR "setup\install_python.ps1")

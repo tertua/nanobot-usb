@@ -135,7 +135,8 @@ def main():
     git_cmd = os.path.join(root_dir, 'bin', 'git', 'cmd')
     nodejs_dir = os.path.join(root_dir, 'bin', 'nodejs')
     gh_bin = os.path.join(root_dir, 'bin', 'gh', 'bin')
-    exec_cfg['pathAppend'] = ';'.join([py_dir, scripts_dir, git_cmd, nodejs_dir, gh_bin])
+    py_scripts = os.path.join(root_dir, 'bin', 'Scripts')
+    exec_cfg['pathAppend'] = ';'.join([py_dir, scripts_dir, git_cmd, nodejs_dir, gh_bin, py_scripts])
     exec_cfg['restrictToWorkspace'] = True
     tools['exec'] = exec_cfg
 

@@ -28,17 +28,19 @@ echo  [2] Git portable (MinGit)
 echo.
 echo  [3] Node.js portable
 echo.
-echo  [4] Nanobot source code
+echo  [4] CLI gh portable
 echo.
-echo  [5] Python dependencies (via pip)
+echo  [5] Nanobot source code
 echo.
-echo  [6] Configuration and lockfile setup
+echo  [6] Python dependencies (via pip)
+echo.
+echo  [7] Configuration and lockfile setup
 echo.
 echo  All components are installed inside %ROOT%
 echo  and will NOT affect your host system.
 echo.
 echo ================================================================
-echo    NANOBOT PORTABLE SETUP - Simata.id
+echo    NANOBOT PORTABLE SETUP - Visit simata.id
 echo ================================================================
 echo.
 
