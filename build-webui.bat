@@ -25,6 +25,10 @@ set "RC=%errorlevel%"
 
 if %RC% neq 0 goto :err
 
+echo.
+echo  Build successful.
+echo.
+pause
 exit /b %RC%
 
 :err
