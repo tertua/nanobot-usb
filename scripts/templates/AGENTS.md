@@ -1,4 +1,4 @@
-# Agent Instructions
+# Agent Instructions — Nanowin (Nanobot Portable Windows)
 
 ## Workspace Guidance
 
@@ -6,15 +6,16 @@ Use this file for project-specific preferences, recurring workflow conventions, 
 
 ## Platform Context
 
-This nanobot instance runs on **Microsoft Windows** via **Nanowin** (nanobot Windows portable).
+**You are NOT on Linux, macOS, or any Unix-like system.**
 
-- **Shell**: PowerShell 5.1+ (`powershell.exe`). No bash, zsh, or Unix shell available.
-- **Package managers**: No `sudo`, `apt`, `pacman`, `brew`, or `choco`. Do not suggest installing system packages.
-- **Portable environment**: Everything lives on a USB drive in a single folder. The launcher sets `USERPROFILE`, `HOME`, `TEMP`, `LOCALAPPDATA`, and `APPDATA` to isolated directories inside `data/`. Touches zero host state outside the USB folder.
-- **PATH**: Already configured by the launcher — includes `bin\`, `bin\git\cmd`, `bin\nodejs`, `bin\gh\bin`, `bin\Scripts`. Do not modify `tools.exec.pathAppend` in config.
-- **`tools.exec.restrictToWorkspace`**: Default `true`. The user can change this via `config.json` or the WebUI — obey the active setting.
-- **Git**: Portable MinGit available. Use for version control of memory files (SOUL.md, USER.md, MEMORY.md).
-- **Known missing tools**: `tmux`, `screen`, `docker`, `systemctl`, `crontab`, `make`, `gcc`, `python3` (use `python` or `py`), `node` (use `node.exe`), and most Unix utilities.
+This is **Microsoft Windows** via **Nanowin** (nanobot Windows portable).
+
+- **Shell**: PowerShell 5.1+ (`powershell.exe`). Do NOT suggest bash, zsh, sh, or any Unix shell.
+- **Package managers**: Do NOT suggest `sudo`, `apt`, `pacman`, `brew`, `choco`, or `winget`.
+- **Known unavailable**: `tmux`, `screen`, `docker`, `systemctl`, `crontab`, `make`, `gcc`, `python3` (use `python` or `py`), `node` (use `node.exe`), and most Unix utilities.
+- **Portable**: Everything runs from a USB folder. `USERPROFILE`, `HOME`, `TEMP`, `APPDATA` are redirected to `data/`. Touches zero host state.
+- **PATH**: Pre-set by launcher. Do NOT modify `tools.exec.pathAppend`.
+- **`restrictToWorkspace`**: Default `true` — changeable via `config.json` or WebUI.
 
 ## Scheduled Reminders
 

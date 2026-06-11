@@ -1,64 +1,29 @@
-﻿# Nanobot Portable Lite
+﻿# Nanowin — Nanobot Windows Portable
 
 > https://github.com/tertua/nanobot-usb
 
-Portable nanobot-ai runtime for Windows. No system installation required.
+Portable AI runtime for Windows. No installation — runs from USB drive.
 
-**Lite** = uses built-in Windows PowerShell 5.1+. No PowerShell 7 needed.
+## Quick Start
+
+| Step | Action |
+|---|---|
+| 1 | Double-click **`setup.bat`** (one-time, ~5 min) |
+| 2 | Double-click **`edit_env.bat`** — enter your API key |
+| 3 | Double-click **`start-chat.bat`** or **`start-gateway.bat`** |
+
+That's it. Everything else is automatic.
 
 ## Requirements
 
 - Windows 10/11 (64-bit)
-- PowerShell 5.1+ (built-in)
-- ~500MB disk space
-
-## Files
-
-```
-nanobot-usb/
-|-- nanobot-setup.ps1       # Setup orchestrator
-|-- nanobot-agent.ps1       # CLI chat mode
-|-- nanobot-gateway.ps1     # Gateway mode
-|-- setup.bat               # Batch launcher for setup
-|-- edit_env.bat            # .env editor launcher
-|-- start-chat.bat          # Batch launcher for chat
-|-- start-gateway.bat       # Batch launcher for gateway
-|-- check_update.bat        # Check for newer Lite release
-|-- build-webui.bat         # Build upstream webui + sync (npm)
-|-- sync-webui.bat          # Push data\webui\ drop zone to site-packages
-|-- scripts/
-|   |-- init_portable.ps1
-|   |-- env_crypt.py
-|   |-- healthcheck.py
-|   |-- portable_paths.py
-|   |-- post_config.py
-|   |-- resolve_workspace.py
-|   |-- write_lockhead.py
-|   |-- install_webui.ps1
-|   |-- sync_webui.ps1
-|   |-- unzip.vbs
-|   |-- requirements-lite.txt
-|   |-- setup/
-|       |-- setup_helpers.ps1
-|       |-- install_python.ps1
-|       |-- install_git.ps1
-|       |-- install_nodejs.ps1
-|       |-- install_source.ps1
-|       |-- install_deps.ps1
-|       |-- download.ps1
-|       |-- extract.ps1
-```
-
-## Quick Start
-
-Run `nanobot-setup.ps1` once. Setup downloads and installs all dependencies into `bin/`.
-
-Configure API key via `edit_env.bat`, then run `nanobot-agent.ps1` or `nanobot-gateway.ps1`.
+- ~500 MB free space
 
 ## Uninstall
 
-Delete the folder. Nothing is installed on the system.
+1. Backup your `data` folder — it contains your API keys, config, and personal data.
+2. Delete the folder. Nothing else touches your system.
 
 ---
 
-Based on [nanobot-ai](https://github.com/HKUDS/nanobot). Fully portable from USB drive.
+Based on [nanobot-ai](https://github.com/HKUDS/nanobot). Fully portable.
