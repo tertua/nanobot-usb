@@ -130,13 +130,10 @@ def main():
     # === tools.exec ===
     tools = config.get('tools', {})
     exec_cfg = tools.get('exec', {})
-    py_dir = os.path.join(root_dir, 'bin')
-    scripts_dir = os.path.join(root_dir, 'scripts')
-    git_cmd = os.path.join(root_dir, 'bin', 'git', 'cmd')
-    nodejs_dir = os.path.join(root_dir, 'bin', 'nodejs')
-    gh_bin = os.path.join(root_dir, 'bin', 'gh', 'bin')
-    py_scripts = os.path.join(root_dir, 'bin', 'Scripts')
-    exec_cfg['pathAppend'] = ';'.join([py_dir, scripts_dir, git_cmd, nodejs_dir, gh_bin, py_scripts])
+    # pathAppend left empty: _build_env() on Windows inherits PATH from the parent
+    # process (launcher already prepends $PortablePaths). Absolute paths would break
+    # on USB drive letter changes; relative paths would break if workspace is moved
+    # outside root. Inherited PATH is correct regardless of either.
     exec_cfg['restrictToWorkspace'] = True
     tools['exec'] = exec_cfg
 
