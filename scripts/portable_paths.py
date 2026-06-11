@@ -342,8 +342,63 @@ if commands_target:
 else:
     commands_changed = 0
 
+# ── 5. helpers.py ──────────────────────────────────────────────────
+HELPERS_TARGETS = [
+    ROOT / "app" / "nanobot" / "utils" / "helpers.py",
+    ROOT / "bin" / "Lib" / "site-packages" / "nanobot" / "utils" / "helpers.py",
+]
+
+helpers_target = None
+for p in HELPERS_TARGETS:
+    if p.exists():
+        helpers_target = p
+        break
+
+if helpers_target is None:
+    print("[ERROR] Cannot find nanobot/utils/helpers.py.")
+else:
+    print(f"Helpers file: {helpers_target}")
+
+def patch_sync_workspace_templates(content: str) -> tuple[str, int]:
+    """5. sync_workspace_templates(): check NANOBOT_HOME/../scripts/templates/ first."""
+    old = (
+        '    try:\n'
+        '        tpl = pkg_files("nanobot") / "templates"\n'
+        '    except Exception:\n'
+        '        return []\n'
+        '    if not tpl.is_dir():\n'
+        '        return []'
+    )
+    new = (
+        '    try:\n'
+        '        tpl = pkg_files("nanobot") / "templates"\n'
+        '    except Exception:\n'
+        '        return []\n'
+        '    if not tpl.is_dir():\n'
+        '        return []\n'
+        '    # Nanowin: prefer custom templates from NANOBOT_HOME/../scripts/templates/\n'
+        '    import os\n'
+        '    _lite_nh = os.environ.get("NANOBOT_HOME")\n'
+        '    if _lite_nh:\n'
+        '        _lite_tpl = Path(_lite_nh).resolve().parent / "scripts" / "templates"\n'
+        '        if _lite_tpl.is_dir():\n'
+        '            tpl = _lite_tpl'
+    )
+    return simple_replace(content, old, new, "5. helpers.py sync_workspace_templates custom templates")
+
+helpers_changed = 0
+if helpers_target:
+    content = helpers_target.read_text("utf-8")
+    content, ch = patch_sync_workspace_templates(content)
+    helpers_changed += ch
+    if helpers_changed:
+        helpers_target.write_text(content, "utf-8")
+        print(f"  -> {helpers_changed} patch(es) applied to helpers.py")
+    else:
+        print("  -> No changes to helpers.py")
+
 # ── Summary ────────────────────────────────────────────────────────
-total = paths_changed + loader_changed + schema_changed + commands_changed
+total = paths_changed + loader_changed + schema_changed + commands_changed + helpers_changed
 print(f"\nDone. {total} file(s) patched.")
 if total:
     print("Please restart nanobot to apply changes.")
