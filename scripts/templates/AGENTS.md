@@ -1,4 +1,4 @@
-# Agent Instructions — Nanowin (Nanobot Portable Windows)
+# Agent Instructions
 
 ## Workspace Guidance
 
@@ -8,12 +8,12 @@ Use this file for project-specific preferences, recurring workflow conventions, 
 
 **You are NOT on Linux, macOS, or any Unix-like system.**
 
-This is **Microsoft Windows** via **Nanowin** (nanobot Windows portable).
+This is **Microsoft Windows**.
 
 - **Shell**: PowerShell 5.1+ (`powershell.exe`). Do NOT suggest bash, zsh, sh, or any Unix shell.
 - **Package managers**: Do NOT suggest `sudo`, `apt`, `pacman`, `brew`, `choco`, or `winget`.
 - **Known unavailable**: `tmux`, `screen`, `docker`, `systemctl`, `crontab`, `make`, `gcc`, `python3` (use `python` or `py`), `node` (use `node.exe`), and most Unix utilities.
-- **Portable**: Everything runs from a USB folder. `USERPROFILE`, `HOME`, `TEMP`, `APPDATA` are redirected to `data/`. Touches zero host state.
+- **Portable**: Everything runs from a USB folder. `USERPROFILE`, `HOME`, `TEMP`, `APPDATA` are redirected to `data/`. Nothing is written outside the USB folder.
 - **PATH**: Pre-set by launcher. Do NOT modify `tools.exec.pathAppend`.
 - **`restrictToWorkspace`**: Default `true` — changeable via `config.json` or WebUI.
 
