@@ -34,7 +34,7 @@ try {
     Write-Status "EXTRACT_SUCCESS"
     exit 0
 } catch {
-    Write-Status "Metode 1 gagal: $($_.Exception.Message)"
+    Write-Status "Metode 1 failed: $($_.Exception.Message)"
 }
 
 # Metode 2: Shell.Application COM
@@ -50,7 +50,7 @@ try {
         exit 0
     }
 } catch {
-    Write-Status "Metode 2 gagal: $($_.Exception.Message)"
+    Write-Status "Metode 2 failed: $($_.Exception.Message)"
 }
 
 # Metode 3: .NET ZipFile
@@ -62,7 +62,7 @@ try {
     Write-Status "EXTRACT_SUCCESS"
     exit 0
 } catch {
-    Write-Status "Metode 3 gagal: $($_.Exception.Message)"
+    Write-Status "Metode 3 failed: $($_.Exception.Message)"
 }
 
 # Metode 4: VBS fallback
@@ -76,15 +76,15 @@ try {
             Write-Status "EXTRACT_SUCCESS"
             exit 0
         } else {
-            Write-Status "Metode 4 gagal: exit code $LASTEXITCODE"
+            Write-Status "Metode 4 failed: exit code $LASTEXITCODE"
         }
     } else {
-        Write-Status "Metode 4 gagal: unzip.vbs not found at $VbsScript"
+        Write-Status "Metode 4 failed: unzip.vbs not found at $VbsScript"
     }
 } catch {
-    Write-Status "Metode 4 gagal: $($_.Exception.Message)"
+    Write-Status "Metode 4 failed: $($_.Exception.Message)"
 }
 
-Write-Status "Semua metode extract gagal!"
+Write-Status "All metode extract failed!"
 Write-Status "EXTRACT_FAILED"
 exit 1

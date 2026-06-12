@@ -42,7 +42,7 @@ function Download-File($url, $out) {
             return $true
         }
     } catch {
-        Write-Status "Metode 1 gagal: $($_.Exception.Message)"
+        Write-Status "Metode 1 failed: $($_.Exception.Message)"
     }
 
     # Metode 2: WebClient
@@ -57,7 +57,7 @@ function Download-File($url, $out) {
             return $true
         }
     } catch {
-        Write-Status "Metode 2 gagal: $($_.Exception.Message)"
+        Write-Status "Metode 2 failed: $($_.Exception.Message)"
     }
 
     # Metode 3: HttpClient
@@ -91,10 +91,10 @@ function Download-File($url, $out) {
             if ($handler) { $handler.Dispose() }
         }
     } catch {
-        Write-Status "Metode 3 gagal: $($_.Exception.Message)"
+        Write-Status "Metode 3 failed: $($_.Exception.Message)"
     }
 
-    Write-Status "Semua metode gagal!"
+    Write-Status "All metode failed!"
     return $false
 }
 

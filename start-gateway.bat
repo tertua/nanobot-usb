@@ -13,10 +13,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo.
-echo  ^>^> Starting Gateway ^<^<
-echo.
-
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0nanobot-gateway.ps1"
 set "RC=%errorlevel%"
 

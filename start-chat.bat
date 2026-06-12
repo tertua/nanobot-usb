@@ -13,10 +13,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo.
-echo  ^>^> Starting AI Agent ^<^<
-echo.
-
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0nanobot-agent.ps1"
 
 if %errorlevel% neq 0 (

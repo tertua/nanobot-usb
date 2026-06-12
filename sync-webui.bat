@@ -13,10 +13,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo.
-echo  ^>^> Syncing manually-built webui to installed package ^<^<
-echo.
-
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\sync_webui.ps1"
 
 if %errorlevel% neq 0 (

@@ -40,7 +40,7 @@ echo  All components are installed inside %ROOT%
 echo  and will NOT affect your host system.
 echo.
 echo ================================================================
-echo    NANOBOT PORTABLE SETUP - Visit simata.id
+echo    NANOBOT PORTABLE BUILDER - Visit simata.id
 echo ================================================================
 echo.
 

@@ -20,10 +20,11 @@
 # Update check
 !/check_update.bat
 
-# Python cache files
+# Cache files
 __pycache__/
 *.py[cod]
 *$py.class
+node_modules/
 
 # All Launcher Batch
 !/start-chat.bat

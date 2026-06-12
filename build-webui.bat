@@ -14,8 +14,6 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo  ^>^> Building webui and syncing to installed package ^<^<
-echo.
 echo  This downloads ~250MB node_modules on first run (npm is incremental on re-runs).
 echo  Requires internet. Re-runnable for retries.
 echo.
