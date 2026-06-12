@@ -76,3 +76,5 @@ echo  [..] Running build...
 echo.
 
 call "%ROOT%build-webui.bat"
+
+pause

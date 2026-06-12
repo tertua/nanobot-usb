@@ -82,6 +82,13 @@ def _patch_log_handlers(content: str, cond_var: str, old_upstream: str, new_bloc
     For other unrecognised states, post-condition check fails and a [WARN] is logged —
     delete data\\.lockhead and re-run setup.bat to recover.
     """
+    # Fresh upstream state: try full-block replace first (before sentinel check,
+    # because a previous function's patch may have added _log_dir.mkdir).
+    if old_upstream and old_upstream in content:
+        content = content.replace(old_upstream, new_block)
+        print(f"  [OK] {label} (upstream full-block)")
+        return content, 1
+
     # Sentinel: already fully patched (logger.remove() in log section + terminal ternary + file DEBUG)
     if "_log_dir.mkdir" in content:
         log_section = content[content.index("_log_dir.mkdir"):]
@@ -92,51 +99,46 @@ def _patch_log_handlers(content: str, cond_var: str, old_upstream: str, new_bloc
         ):
             return content, 0  # SKIP
 
-    # Upstream state: no _log_dir at all → full-block replace
-    if "_log_dir.mkdir" not in content:
-        if old_upstream and old_upstream in content:
-            content = content.replace(old_upstream, new_block)
-            print(f"  [OK] {label} (upstream full-block)")
+    # Partially patched: has _log_dir but sentinel failed → apply small regex subs
+    if "_log_dir.mkdir" in content:
+        n_total = 0
+
+        # Sub A
+        content, n = re.subn(r'logger\.remove\(_log_handler_id\)', 'logger.remove()', content)
+        n_total += n
+
+        # Sub B
+        content, n = re.subn(
+            r'(logger\.add\(\s*_log_dir / "nanobot_\{time:YYYY-MM-DD\}\.log",.*?level=)"(?:INFO|WARNING)"',
+            r'\1"DEBUG"',
+            content,
+            flags=re.DOTALL,
+        )
+        n_total += n
+
+        # Sub C
+        cond_re = re.escape(cond_var)
+        content, n = re.subn(
+            r'    if ' + cond_re + r':\n        logger\.add\(\s*sys\.stderr,.*?level="DEBUG",\s*colorize=None,\s*filter=.*?,\s*\)\n',
+            _STDERR_BLOCK.replace('__COND__', cond_var),
+            content,
+            flags=re.DOTALL,
+        )
+        n_total += n
+
+        # Post-condition check
+        log_section = content[content.index("_log_dir.mkdir"):]
+        has_remove = "logger.remove()" in log_section
+        has_terminal = f'"DEBUG" if {cond_var} else "INFO"' in content
+        has_file_debug = re.search(r'level="DEBUG",\s+rotation="1 day"', content) is not None
+        if has_remove and has_terminal and has_file_debug:
+            print(f"  [OK] {label} ({n_total} regex sub(s))")
             return content, 1
-        print(f"  [WARN] {label}: no _log_dir and no upstream pattern — version mismatch?")
+
+        print(f"  [WARN] {label}: incomplete after subs — delete data\\.lockhead and re-run setup.bat")
         return content, 0
 
-    # Has _log_dir: apply 3 small regex subs
-    n_total = 0
-
-    # Sub A
-    content, n = re.subn(r'logger\.remove\(_log_handler_id\)', 'logger.remove()', content)
-    n_total += n
-
-    # Sub B
-    content, n = re.subn(
-        r'(logger\.add\(\s*_log_dir / "nanobot_\{time:YYYY-MM-DD\}\.log",.*?level=)"(?:INFO|WARNING)"',
-        r'\1"DEBUG"',
-        content,
-        flags=re.DOTALL,
-    )
-    n_total += n
-
-    # Sub C
-    cond_re = re.escape(cond_var)
-    content, n = re.subn(
-        r'    if ' + cond_re + r':\n        logger\.add\(\s*sys\.stderr,.*?level="DEBUG",\s*colorize=None,\s*filter=.*?,\s*\)\n',
-        _STDERR_BLOCK.replace('__COND__', cond_var),
-        content,
-        flags=re.DOTALL,
-    )
-    n_total += n
-
-    # Post-condition check
-    log_section = content[content.index("_log_dir.mkdir"):]
-    has_remove = "logger.remove()" in log_section
-    has_terminal = f'"DEBUG" if {cond_var} else "INFO"' in content
-    has_file_debug = re.search(r'level="DEBUG",\s+rotation="1 day"', content) is not None
-    if has_remove and has_terminal and has_file_debug:
-        print(f"  [OK] {label} ({n_total} regex sub(s))")
-        return content, 1
-
-    print(f"  [WARN] {label}: incomplete after subs — delete data\\.lockhead and re-run setup.bat")
+    print(f"  [WARN] {label}: pattern not found — version mismatch?")
     return content, 0
 
 # ── 1. paths.py ────────────────────────────────────────────────────
