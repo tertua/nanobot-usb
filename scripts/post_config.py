@@ -129,15 +129,13 @@ def main():
 
     # === tools.exec ===
     tools = config.get('tools', {})
-    exec_cfg = tools.get('exec', {})
+    tools.setdefault('exec', {})
     # pathAppend left empty: _build_env() on Windows inherits PATH from the parent
     # process (launcher already prepends $PortablePaths). Absolute paths would break
     # on USB drive letter changes; relative paths would break if workspace is moved
     # outside root. Inherited PATH is correct regardless of either.
-    exec_cfg['restrictToWorkspace'] = True
-    tools['exec'] = exec_cfg
-
-    # Also set top-level restrictToWorkspace
+    # restrictToWorkspace is at tools level (not tools.exec) — ExecToolConfig
+    # doesn't have this field; upstream ToolsConfig.restrict_to_workspace does.
     tools['restrictToWorkspace'] = True
 
     # === write back ===
