@@ -7,8 +7,6 @@
 !/.gitattributes
 !/LICENSE
 
-!/data/.env.example
-
 # All Portable Builder
 !/setup.bat
 !/nanobot-setup.ps1
@@ -35,7 +33,6 @@ node_modules/
 !/build-webui-custom.bat
 
 # All Markdown
-!/CHANGELOG.md
 !/README.md
 !/SECURITY.md
 !/AGENTS.md

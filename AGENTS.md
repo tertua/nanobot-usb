@@ -47,7 +47,7 @@ data/   # Runtime data: config.json, .env.encrypted, .env_key, .lockhead, knowle
 
 ## Critical conventions
 
-- **Whitelist `.gitignore`.** Starts with `/*` — any new top-level file needs a `!/path` rule. Tracked set: all `.bat`, `.ps1`, `scripts/**`, `README.md`, `SECURITY.md`, `AGENTS.md`, `CHANGELOG.md`, `LICENSE`, `data/.env.example`, `.github/`, `.gitattributes`, `.gitignore`.
+- **Whitelist `.gitignore`.** Starts with `/*` — any new top-level file needs a `!/path` rule. Tracked set: all `.bat`, `.ps1`, `scripts/**`, `README.md`, `SECURITY.md`, `AGENTS.md`, `LICENSE`, `.github/`, `.gitattributes`, `.gitignore`.
 - **Line endings.** `.ps1`/`.bat`/`.vbs`/etc. are CRLF (PS5.1 chokes on LF). `.py`/`.md`/`.json`/etc. are LF.
 - **Hard-coded versions in `nanobot-setup.ps1`** (`$PyVer`, `$GitVer`, `$NodeVer`, `$ArchPython`, `$ArchNode`, `$ArchMinGit`, `$MinGwDir`). Bump them there — no manifest.
 - **`.env` encrypted at rest.** `edit_env.bat` is the only path to plaintext (decrypt→notepad→re-encrypt). Launchers use `Load-EnvEncrypted` → `env_crypt.py load` → `.env.tmp` → process env → delete `.env.tmp`. Never write a real key into a tracked file.
