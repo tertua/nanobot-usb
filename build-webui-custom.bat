@@ -16,8 +16,8 @@ if not exist "%CUSTOM_DIR%\package.json" (
     exit /b 1
 )
 
-xcopy /E /I /Y "%CUSTOM_DIR%\*" "%ROOT%app\webui\" >nul 2>&1
-if errorlevel 1 (
+xcopy /E /I /Y /H /K "%CUSTOM_DIR%\*" "%ROOT%app\webui\"
+if %errorlevel% geq 4 (
     echo [ERROR] Overlay copy failed
     pause
     exit /b 1
