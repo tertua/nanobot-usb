@@ -12,7 +12,7 @@ Windows-portable runtime for [HKUDS/nanobot](https://github.com/HKUDS/nanobot). 
 | `setup.bat` | One-shot install. Short-circuits if `data\.lockhead` exists — delete it to re-run. |
 | `edit_env.bat` | Decrypt `data\.env.encrypted` → notepad → re-encrypt (saves key on first encrypt). |
 | `start-chat.bat` | Launch CLI chat (`nanobot-agent.ps1` wrapper). |
-| `start-gateway.bat` | Launch web gateway (`nanobot-gateway.ps1` wrapper, HTTP :8900, WS :8765). |
+| `start-gateway.bat` | Launch web gateway (`nanobot-gateway.ps1` wrapper, WebUI :8765, API :8900). |
 | `check_update.bat` | Check GitHub for newer Lite release (compares against `[sha]` in `data\.lockhead`). |
 | `build-webui.bat` | `npm install + build` in `app\webui`, then copy to site-packages. |
 | `sync-webui.bat` | Copy pre-built `data\webui\dist\*` → site-packages (mtime-idempotent). |
@@ -56,7 +56,7 @@ data/   # Runtime data: config.json, .env.encrypted, .env_key, .lockhead, knowle
 - **`NANOBOT_HOME`** env var overrides `~/.nanobot` for config. Set in `init_portable.ps1` to `data/`.
 - **New launchers must** define `$ROOT`, then dot-source `scripts/init_portable.ps1`, then call `Load-EnvEncrypted`. Don't reimplement.
 - **Default config** (`post_config.py`): `model: sengkuni-1.0`, `provider: custom` (uses `${NANOBOT_CUSTOM_API_KEY}` + `${NANOBOT_CUSTOM_API_BASE}`), `disabledSkills: ["summarize", "tmux"]`, `tools.restrictToWorkspace: true`. `tools.exec.pathAppend` is left empty — `_build_env()` inherits PATH from parent (launcher prepends `$PortablePaths`), which is correct regardless of USB drive letter or workspace location. Absolute `pathAppend` would break on drive letter changes; relative would break if workspace moves outside root.
-- **Gateway ports** HTTP 8900, WS 8765 (from `config.json`; fallback values). `nanobot-gateway.ps1` reads both ports from config and passes `--port` (HTTP) to CLI; the WS port is picked up by the gateway from the config schema at runtime. Silently kills stale processes on both ports at startup and registers a `PowerShell.Exiting` handler.
+- **Gateway ports** WebUI/WS on :8765, OpenAI-compatible API on :8900 (`/v1/chat/completions`, `/v1/models`, etc.). External tools (e.g. opencode) use `:8900` as an OpenAI API base URL. `nanobot-gateway.ps1` reads both ports from `config.json` and passes `--port` (API) to CLI; the WS port is picked up by the gateway from config at runtime. Silently kills stale processes on both ports at startup and registers a `PowerShell.Exiting` handler.
 - **Custom workspace templates** (`scripts/templates/`). `portable_paths.py` patches `utils/helpers.py` → `sync_workspace_templates()` to check `{NANOBOT_HOME}/../scripts/templates/` before falling back to upstream bundled templates. Edit these `.md` files to control what nanobot writes to a new workspace on first run. Deleted custom templates directory → silently falls back to upstream defaults, no crash.
 - **Patches upstream source.** `portable_paths.py` rewrites `paths.py`, `loader.py`, `schema.py`, `cli/commands.py`, `utils/helpers.py`. Logs `[WARN] pattern not found` for misses — re-check after upstream bump. The `commands.py` log-handler patch is post-condition-checked (sentinels: `logger.remove()` + `"DEBUG" if X else "INFO"` + `level="DEBUG", rotation="1 day"`).
 - **`pip install --no-deps`** wipes the webui `dist/`. Re-run `build-webui.bat` or `sync-webui.bat` after every `setup.bat`.
